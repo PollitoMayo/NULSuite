@@ -3,6 +3,7 @@ import corsPlugin from "./plugins/cors.js";
 import jwtPlugin from "./plugins/jwt.js";
 import authRoutes from "./routes/auth.js";
 import sheetsRoutes from "./routes/sheets.js";
+import charactersRoutes from "./routes/characters.js";
 
 (async () => {
   const app = Fastify({ logger: true });
@@ -12,6 +13,7 @@ import sheetsRoutes from "./routes/sheets.js";
 
   await app.register(authRoutes, { prefix: "/api" });
   await app.register(sheetsRoutes, { prefix: "/api" });
+  await app.register(charactersRoutes, { prefix: "/api" });
 
   app.get("/health", async () => ({ ok: true }));
 

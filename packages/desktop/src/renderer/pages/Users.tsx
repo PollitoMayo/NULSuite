@@ -5,10 +5,14 @@ import type { SheetData, AppendRowRequest, UpdateRowRequest } from "@nul/shared"
 
 const SHEET = "USERS";
 
-interface User {
-  rowIndex: number; // 0-based, for the API
+export interface User {
+  rowIndex: number;
   discord: string;
   username: string;
+}
+
+interface Props {
+  onUserClick: (user: User) => void;
 }
 
 // Case-insensitive column lookup
@@ -32,7 +36,7 @@ function avatarColor(str: string): string {
   return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
 }
 
-export default function Users() {
+export default function Users({ onUserClick }: Props) {
   const { data, loading, error, call } = useApi<SheetData>();
   const [showAdd, setShowAdd] = useState(false);
   const [editing, setEditing] = useState<User | null>(null);
@@ -96,10 +100,10 @@ export default function Users() {
   return (
     <div style={{ display: "flex", flexDirection: "column", flex: 1, overflow: "hidden" }}>
 
-      <div style={s.toolbar}>
+      <div className="page-header">
         <div>
-          <h1 style={s.title}>Usuarios</h1>
-          <p style={s.subtitle}>
+          <h1 className="page-title">Usuarios</h1>
+          <p className="page-subtitle">
             {loading ? "Cargando…" : `${users.length} usuario${users.length !== 1 ? "s" : ""} registrado${users.length !== 1 ? "s" : ""}`}
           </p>
         </div>
@@ -111,30 +115,36 @@ export default function Users() {
         </button>
       </div>
 
-      {error && <p style={s.errorBanner}>{error}</p>}
+      {error && <p className="error-banner">{error}</p>}
 
-      <div style={s.listWrapper}>
+      <div style={{ flex: 1, overflowY: "auto", padding: "24px 28px" }}>
         {loading ? (
-          <div style={s.center}><p style={{ color: "var(--text-muted)" }}>Cargando usuarios…</p></div>
+          <div className="empty-state"><p className="muted">Cargando usuarios…</p></div>
         ) : users.length === 0 ? (
-          <div style={s.center}>
-            <div style={s.emptyIcon}>👥</div>
-            <p style={s.emptyTitle}>No hay usuarios registrados</p>
-            <p style={{ color: "var(--text-muted)", fontSize: 13, marginTop: 4 }}>Agrega tu primer usuario para comenzar.</p>
+          <div className="empty-state">
+            <div className="empty-icon">👥</div>
+            <p className="empty-title">No hay usuarios registrados</p>
+            <p className="muted" style={{ fontSize: 13, marginTop: 4 }}>Agrega tu primer usuario para comenzar.</p>
           </div>
         ) : (
-          <div style={s.grid}>
+          <div className="cards-grid">
             {users.map((user) => {
               const color = avatarColor(user.username || user.discord);
               const initials = (user.username || user.discord).slice(0, 2).toUpperCase();
               return (
-                <div key={user.rowIndex} style={s.card} onClick={() => openEdit(user)}>
-                  <div style={{ ...s.avatar, background: color }}>{initials}</div>
-                  <div style={s.cardBody}>
-                    <p style={s.cardName}>{user.username || <em style={{ color: "var(--text-muted)" }}>No name</em>}</p>
-                    <p style={s.cardDiscord}>@{user.discord}</p>
+                <div key={user.rowIndex} className="user-card" onClick={() => onUserClick(user)}>
+                  <div className="avatar" style={{ background: color }}>{initials}</div>
+                  <div className="card-body">
+                    <p className="card-name">{user.username || <em className="muted">Sin nombre</em>}</p>
+                    <p className="card-sub">@{user.discord}</p>
                   </div>
-                  <div style={s.editHint}>Editar</div>
+                  <button
+                    className="icon-btn"
+                    title="Editar usuario"
+                    onClick={(e) => { e.stopPropagation(); openEdit(user); }}
+                  >
+                    ✏️
+                  </button>
                 </div>
               );
             })}
@@ -176,7 +186,7 @@ export default function Users() {
 
             {saveError && <p style={{ color: "var(--danger)", fontSize: 13 }}>{saveError}</p>}
 
-            <div className="modal-footer">
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 4 }}>
               <button type="button" className="ghost" onClick={closeModal}>Cancelar</button>
               <button type="submit" disabled={saving}>
                 {saving ? "Guardando…" : isEditing ? "Guardar Cambios" : "Agregar Usuario"}
@@ -190,36 +200,6 @@ export default function Users() {
 }
 
 const s: Record<string, React.CSSProperties> = {
-  toolbar: {
-    display: "flex", alignItems: "center", justifyContent: "space-between",
-    padding: "24px 28px", borderBottom: "1px solid var(--border)",
-  },
-  title: { fontSize: 22, fontWeight: 700, letterSpacing: "-0.02em" },
-  subtitle: { fontSize: 13, color: "var(--text-muted)", marginTop: 2 },
-  errorBanner: { background: "#3b1213", color: "var(--danger)", padding: "10px 28px", fontSize: 13 },
-  listWrapper: { flex: 1, overflowY: "auto", padding: "24px 28px" },
-  grid: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 12 },
-  card: {
-    display: "flex", alignItems: "center", gap: 14, position: "relative",
-    background: "var(--surface)", border: "1px solid var(--border)",
-    borderRadius: 10, padding: "14px 16px", cursor: "pointer",
-    transition: "border-color 0.15s, background 0.15s",
-  },
-  avatar: {
-    width: 42, height: 42, borderRadius: "50%",
-    display: "flex", alignItems: "center", justifyContent: "center",
-    fontSize: 15, fontWeight: 700, color: "#fff", flexShrink: 0,
-  },
-  cardBody: { display: "flex", flexDirection: "column", gap: 3, minWidth: 0, flex: 1 },
-  cardName: { fontWeight: 600, fontSize: 15, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" },
-  cardDiscord: { fontSize: 13, color: "var(--text-muted)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" },
-  editHint: {
-    fontSize: 11, fontWeight: 600, color: "var(--text-muted)",
-    textTransform: "uppercase", letterSpacing: "0.05em", flexShrink: 0,
-  },
-  center: { display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100%", gap: 8 },
-  emptyIcon: { fontSize: 36, marginBottom: 8 },
-  emptyTitle: { fontSize: 16, fontWeight: 600 },
   inputWrapper: { display: "flex", alignItems: "stretch" },
   inputPrefix: {
     background: "var(--border)", color: "var(--text-muted)",
