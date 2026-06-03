@@ -1,0 +1,11 @@
+services:
+  nul-bot-dev:
+    image: node:22-alpine
+    container_name: nul-bot-dev
+    working_dir: /app
+    volumes:
+      - .:/app
+      - /app/node_modules
+    command: sh -c "npm install && npm run dev"
+    env_file:
+      - .env.dev
