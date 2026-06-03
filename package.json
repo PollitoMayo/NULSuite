@@ -1,25 +1,19 @@
 {
-  "name": "nul-bot",
-  "version": "1.0.0",
-  "description": "NUL Discord Bot",
-  "main": "dist/index.js",
-  "type": "commonjs",
+  "name": "nul-suite",
+  "private": true,
+  "pnpm": {
+    "overrides": {
+      "esbuild": "0.25.12"
+    }
+  },
   "scripts": {
-    "dev": "tsx watch --env-file .env.dev src/index.ts",
-    "build": "tsc",
-    "start": "node --env-file .env.prod dist/index.js",
-    "deploy:commands": "tsx --env-file .env.dev src/deploy-commands.ts"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "dependencies": {
-    "discord.js": "^14.26.4",
-    "dotenv": "^17.4.2"
-  },
-  "devDependencies": {
-    "@types/node": "^25.9.1",
-    "tsx": "^4.22.4",
-    "typescript": "^6.0.3"
+    "dev:bot": "pnpm --filter @nul/bot dev",
+    "dev:server": "pnpm --filter @nul/server dev",
+    "dev:desktop": "pnpm --filter @nul/desktop dev",
+    "build": "pnpm --filter @nul/shared build && pnpm --filter !@nul/shared build --parallel",
+    "start:bot": "pnpm build && pnpm --filter @nul/bot start",
+    "start:server": "pnpm build && pnpm --filter @nul/server start",
+    "start": "pnpm build && pnpm --filter @nul/bot start & pnpm --filter @nul/server start",
+    "deploy:commands": "pnpm --filter @nul/bot deploy:commands"
   }
 }

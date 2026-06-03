@@ -1,0 +1,24 @@
+appId: com.nul.desktop
+productName: NUL Admin
+directories:
+  buildResources: resources
+files:
+  - "!**/.vscode/*"
+  - "!src/*"
+  - "!electron.vite.config.*"
+  - "!{.eslintignore,.eslintrc.cjs,.prettierignore,.prettierrc.yaml,dev-app-update.yml,CHANGELOG.md,README.md}"
+  - "!{.env,.env.*,.npmrc,pnpm-lock.yaml}"
+asarUnpack:
+  - resources/**
+mac:
+  entitlementsInherit: resources/entitlements.mac.plist
+  extendInfo:
+    NSCameraUsageDescription: Application requests access to the device's camera.
+win:
+  executableName: nul-admin
+linux:
+  target:
+    - AppImage
+    - snap
+  maintainer: nul
+  category: Utility

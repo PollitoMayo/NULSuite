@@ -1,0 +1,23 @@
+{
+  "name": "@nul/server",
+  "version": "0.1.0",
+  "main": "dist/index.js",
+  "scripts": {
+    "dev": "tsx watch --env-file .env.dev src/index.ts",
+    "build": "tsc",
+    "start": "node --env-file .env.prod dist/index.js"
+  },
+  "dependencies": {
+    "@fastify/cors": "^10.0.2",
+    "@fastify/jwt": "^9.1.0",
+    "@nul/shared": "workspace:*",
+    "fastify": "^5.3.3",
+    "fastify-plugin": "^5.0.1",
+    "googleapis": "^148.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^25.9.1",
+    "tsx": "^4.22.4",
+    "typescript": "^6.0.3"
+  }
+}

@@ -1,8 +1,8 @@
-node_modules
-dist
-.env
-.env.*
+**/node_modules
+**/dist
+**/.env
+**/.env.*
 *.md
 .git
 .gitignore
-docker-compose*.yml
+packages/desktop

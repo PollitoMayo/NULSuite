@@ -1,0 +1,12 @@
+services:
+  nul-bot:
+    build: .
+    image: nul-bot:latest
+    container_name: nul-bot
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - DISCORD_TOKEN=${DISCORD_TOKEN}
+      - CLIENT_ID=${CLIENT_ID}
+    env_file:
+      - .env.prod

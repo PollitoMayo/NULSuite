@@ -1,0 +1,20 @@
+{
+  "name": "@nul/bot",
+  "version": "0.1.0",
+  "main": "dist/index.js",
+  "scripts": {
+    "dev": "tsx watch --env-file .env.dev src/index.ts",
+    "build": "tsc",
+    "start": "node --env-file .env.prod dist/index.js",
+    "deploy:commands": "tsx --env-file .env.dev src/deploy-commands.ts"
+  },
+  "dependencies": {
+    "@nul/shared": "workspace:*",
+    "discord.js": "^14.26.4"
+  },
+  "devDependencies": {
+    "@types/node": "^25.9.1",
+    "tsx": "^4.22.4",
+    "typescript": "^6.0.3"
+  }
+}
