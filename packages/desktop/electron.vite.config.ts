@@ -18,6 +18,11 @@ export default defineConfig({
     },
   },
   renderer: {
+    resolve: {
+      alias: {
+        "@nul/shared": resolve(__dirname, "../shared/src/index.ts"),
+      },
+    },
     plugins: [react()],
     build: {
       outDir: "dist/renderer",

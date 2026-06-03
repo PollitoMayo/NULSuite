@@ -2,33 +2,9 @@ import { useEffect, useState } from "react";
 import { useApi, request } from "../hooks/useApi.js";
 import CharacterForm, { CharacterValues } from "../components/CharacterForm.js";
 import type { SheetData, AppendRowRequest, UpdateRowRequest } from "@nul/shared";
+import { PokemonType } from "@nul/shared";
 
 const SHEET = "CHARACTERS";
-
-interface Character extends CharacterValues { rowIndex: number; }
-
-// Covers both English and lowercase Spanish type names from the sheet
-const TYPE_COLORS: Record<string, string> = {
-  normal:"#A8A878",
-  fire:"#F08030",    fuego:"#F08030",
-  water:"#6890F0",   agua:"#6890F0",
-  electric:"#F8D030", "eléctrico":"#F8D030",
-  grass:"#78C850",   planta:"#78C850",
-  ice:"#98D8D8",     hielo:"#98D8D8",
-  fighting:"#C03028", lucha:"#C03028",
-  poison:"#A040A0",  veneno:"#A040A0",
-  ground:"#E0C068",  tierra:"#E0C068",
-  flying:"#A890F0",  volador:"#A890F0",
-  psychic:"#F85888", "psíquico":"#F85888",
-  bug:"#A8B820",     bicho:"#A8B820",
-  rock:"#B8A038",    roca:"#B8A038",
-  ghost:"#705898",   fantasma:"#705898",
-  dragon:"#7038F8",  "dragón":"#7038F8",
-  dark:"#705848",    siniestro:"#705848",
-  steel:"#B8B8D0",   acero:"#B8B8D0",
-  fairy:"#EE99AC",   hada:"#EE99AC",
-};
-const LIGHT_TYPES = new Set(["electric","eléctrico","ice","hielo","ground","tierra","steel","acero","fairy","hada","normal"]);
 
 const SUPER_COLORS: Record<string, string> = {
   "Héroe":"#5865f2", "Villano":"#ed4245", "Ciudadano":"#8e9297",
@@ -39,13 +15,11 @@ const ARCH_COLORS: Record<string, string> = {
 
 function TypeBadge({ type }: { type: string }) {
   if (!type) return null;
-  const key = type.toLowerCase();
-  const bg  = TYPE_COLORS[key] ?? "#555";
-  const color = LIGHT_TYPES.has(key) ? "#222" : "#fff";
+  const pt = PokemonType.parseFrom(type);
+  if (!pt) return <span style={{ fontSize: 11, color: "var(--text-muted)" }}>{type}</span>;
   return (
-    <span className="type-badge" style={{ background: bg, color }}>
-      {type}
-    </span>
+    <img src={pt.symbolUrl} alt={pt.displayName} title={pt.displayName}
+      style={{ height: 24, objectFit: "contain" }} />
   );
 }
 
