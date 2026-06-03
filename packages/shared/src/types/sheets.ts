@@ -13,8 +13,10 @@ export interface EnrichedAbility {
   effects: SheetRow[];
 }
 
+export type EnrichedMove = EnrichedAbility;
+
 export type CharacterRow = {
-  [key: string]: string | number | boolean | null | EnrichedAbility;
+  [key: string]: string | number | boolean | null | EnrichedAbility | EnrichedMove[];
 };
 
 export interface CharacterSheetData {

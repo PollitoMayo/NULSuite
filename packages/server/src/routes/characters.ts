@@ -1,5 +1,5 @@
 import type { FastifyInstance } from "fastify";
-import type { ApiResponse, CharacterSheetData, SheetRow, EnrichedAbility } from "@nul/shared";
+import type { ApiResponse, CharacterSheetData, SheetRow, EnrichedAbility, EnrichedMove } from "@nul/shared";
 import { getSheetData } from "../services/sheets.js";
 
 function colKey(row: SheetRow, key: string): string {
@@ -8,13 +8,15 @@ function colKey(row: SheetRow, key: string): string {
 }
 
 async function buildEnriched(filterDiscord?: string): Promise<CharacterSheetData> {
-  const [charSheet, abilitySheet, effectSheet] = await Promise.all([
+  const [charSheet, abilitySheet, effectSheet, moveSheet, moveEffectSheet] = await Promise.all([
     getSheetData("CHARACTERS"),
     getSheetData("ABILITIES"),
     getSheetData("EFFECTS"),
+    getSheetData("MOVES"),
+    getSheetData("MOVE_EFFECTS"),
   ]);
 
-  // effects map: abilityId -> effect rows
+  // ability effects map: abilityId -> effect rows
   const effectsMap = new Map<string, SheetRow[]>();
   effectSheet.rows.forEach((row) => {
     const id = colKey(row, "abilityid").toLowerCase();
@@ -30,13 +32,31 @@ async function buildEnriched(filterDiscord?: string): Promise<CharacterSheetData
     if (id) abilityMap.set(id, { ...row, effects: effectsMap.get(id) ?? [] } as EnrichedAbility);
   });
 
+  // move effects map: moveId -> effect rows
+  const moveEffectsMap = new Map<string, SheetRow[]>();
+  moveEffectSheet.rows.forEach((row) => {
+    const id = colKey(row, "moveid").toLowerCase();
+    if (!id) return;
+    if (!moveEffectsMap.has(id)) moveEffectsMap.set(id, []);
+    moveEffectsMap.get(id)!.push(row);
+  });
+
+  // move map: moveId -> move row + effects
+  const moveMap = new Map<string, EnrichedMove>();
+  moveSheet.rows.forEach((row) => {
+    const id = colKey(row, "id").toLowerCase();
+    if (id) moveMap.set(id, { ...row, effects: moveEffectsMap.get(id) ?? [] } as EnrichedMove);
+  });
+
   const sourceRows = filterDiscord
     ? charSheet.rows.filter((r) => colKey(r, "discord").toLowerCase() === filterDiscord.toLowerCase())
     : charSheet.rows;
 
   const rows = sourceRows.map((row) => {
     const abilityId = colKey(row, "ability").toLowerCase();
-    return { ...row, Ability: abilityMap.get(abilityId) ?? null };
+    const moveIds   = colKey(row, "moveset").split(",").map((m) => m.trim().toLowerCase()).filter(Boolean);
+    const moves     = moveIds.map((id) => moveMap.get(id) ?? null).filter(Boolean) as EnrichedMove[];
+    return { ...row, Ability: abilityMap.get(abilityId) ?? null, Moves: moves };
   });
 
   return { sheetName: "CHARACTERS", headers: charSheet.headers, rows };

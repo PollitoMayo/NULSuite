@@ -1,7 +1,7 @@
 import { FormEvent, useState } from "react";
 import {
-  EffectCategory, Subject, MoveCategory, DamageStat,
-  EFFECT_VALUE_LABELS, EFFECTS_BY_CATEGORY, SUBJECT_LABELS, MOVE_CATEGORY_LABELS, DAMAGE_STAT_LABELS,
+  EffectCategory, Subject, MoveCategory, DamageStat, Stat,
+  EFFECT_VALUE_LABELS, EFFECTS_BY_CATEGORY, SUBJECT_LABELS, MOVE_CATEGORY_LABELS, DAMAGE_STAT_LABELS, STAT_LABELS,
   type MoveData, type MoveEffectData,
 } from "@nul/shared";
 import { PokemonType } from "@nul/shared";
@@ -24,14 +24,16 @@ interface Props {
 
 const EMPTY_MOVE: MoveData = {
   id: "", name: "", entry: "", type: "", category: "",
-  hitDice: "", hitCondition: "",
+  hitDice: "", hitStat: Stat.SPD, hitCondition: "",
   damageDice: "", damageStat: "",
   effectDice: "", effectCondition: "",
   effects: [],
 };
 
 export default function MoveForm({ initial, isEdit, saving, error, onSubmit, onClose }: Props) {
-  const [form, setForm]       = useState<MoveData>(initial ?? EMPTY_MOVE);
+  const [form, setForm]       = useState<MoveData>(
+    initial ? { ...initial, hitStat: initial.hitStat || Stat.SPD } : EMPTY_MOVE
+  );
   const [effects, setEffects] = useState<MoveEffectData[]>(initial?.effects ?? []);
 
   function set(key: keyof MoveData, value: string) {
@@ -109,7 +111,7 @@ export default function MoveForm({ initial, isEdit, saving, error, onSubmit, onC
 
       {/* Hit roll */}
       <fieldset style={s.fieldset}>
-        <legend style={s.legend}>Tirada de golpe</legend>
+        <legend style={s.legend}>Hit Rate</legend>
         <div style={s.row}>
           <div style={{ flex: "0 0 100px" }}>
             <label>Dado</label>
@@ -119,6 +121,14 @@ export default function MoveForm({ initial, isEdit, saving, error, onSubmit, onC
                 onChange={(e) => set("hitDice", e.target.value)}
                 style={{ borderRadius: "0 6px 6px 0", borderLeft: "none" }} />
             </div>
+          </div>
+          <div style={{ flex: "0 0 100px" }}>
+            <label>+ Stat</label>
+            <select value={form.hitStat} onChange={(e) => set("hitStat", e.target.value)}>
+              {Object.values(Stat).map((v) => (
+                <option key={v} value={v}>{STAT_LABELS[v] ?? v}</option>
+              ))}
+            </select>
           </div>
           <div style={{ flex: 1 }}>
             <label>Condición para impactar</label>

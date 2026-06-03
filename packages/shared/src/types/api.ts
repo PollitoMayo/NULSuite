@@ -50,6 +50,7 @@ export interface MoveRequest {
   type:            string;
   category:        string;
   hitDice:         string;
+  hitStat:         string;
   hitCondition:    string;
   damageDice:      string;
   damageStat:      string;

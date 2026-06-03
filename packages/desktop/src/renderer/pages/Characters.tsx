@@ -1,10 +1,13 @@
 import { useEffect, useState } from "react";
 import { useApi, request } from "../hooks/useApi.js";
 import CharacterForm, { CharacterValues } from "../components/CharacterForm.js";
-import type { CharacterSheetData, EnrichedAbility, AppendRowRequest, UpdateRowRequest } from "@nul/shared";
+import type { CharacterSheetData, EnrichedAbility, EnrichedMove, AppendRowRequest, UpdateRowRequest } from "@nul/shared";
 import {
-  PokemonType, parseAbilityData, formatTrigger, formatEffect, formatEffectCondition,
-  EFFECT_CATEGORY_STYLE, type AbilityData,
+  PokemonType,
+  parseAbilityData, formatTrigger, formatEffect, formatEffectCondition, EFFECT_CATEGORY_STYLE,
+  parseMoveData, formatHitRoll, formatDamageRoll, formatMoveEffectCondition, formatMoveEffect,
+  MOVE_CATEGORY_STYLE,
+  type AbilityData, type MoveData,
 } from "@nul/shared";
 
 const SHEET = "CHARACTERS";
@@ -12,6 +15,7 @@ const SHEET = "CHARACTERS";
 interface Character extends CharacterValues {
   rowIndex:    number;
   abilityData: AbilityData | null;
+  moveDataList: (MoveData | null)[];
 }
 
 const SUPER_COLORS: Record<string, string> = {
@@ -46,10 +50,23 @@ function extractAbility(row: CharacterSheetData["rows"][number]): AbilityData | 
   return parseAbilityData(enriched as Record<string, unknown>, (enriched.effects ?? []) as Record<string, unknown>[]);
 }
 
+function extractMoves(row: CharacterSheetData["rows"][number]): (MoveData | null)[] {
+  const found = Object.keys(row).find((k) => k.toLowerCase() === "moves");
+  const val = found ? row[found] : null;
+  if (!Array.isArray(val)) return [null, null, null, null];
+  return (val as EnrichedMove[]).map((m) =>
+    m ? parseMoveData(m as Record<string, unknown>, (m.effects ?? []) as Record<string, unknown>[]) : null
+  );
+}
+
 function parseChars(data: CharacterSheetData): Character[] {
   return data.rows.map((row, i) => {
-    const moves      = col(row, "moveset").split(",").map((m) => m.trim());
+    const movesetStr  = col(row, "moveset");
+    const moveNames   = movesetStr.split(",").map((m) => m.trim()).filter(Boolean);
     const abilityData = extractAbility(row);
+    const moveDataList = extractMoves(row);
+    // pad with nulls so we always have 4 slots
+    while (moveDataList.length < 4) moveDataList.push(null);
     return {
       rowIndex:    i,
       user:        col(row, "discord"),
@@ -64,10 +81,11 @@ function parseChars(data: CharacterSheetData): Character[] {
       type2:       col(row, "type2"),
       ability:     abilityData?.id ?? col(row, "ability"),
       abilityData,
-      move1:       moves[0] ?? "",
-      move2:       moves[1] ?? "",
-      move3:       moves[2] ?? "",
-      move4:       moves[3] ?? "",
+      moveDataList,
+      move1:       moveNames[0] ?? "",
+      move2:       moveNames[1] ?? "",
+      move3:       moveNames[2] ?? "",
+      move4:       moveNames[3] ?? "",
       archetype:   col(row, "archetype"),
     };
   });
@@ -244,16 +262,71 @@ export default function Characters({ userFilter, userLabel, onBack }: Props) {
                   </div>
 
                   {/* Moveset */}
-                  {moves.length > 0 && (
-                    <div>
-                      <p style={s.sectionLabel}>Moveset</p>
-                      <div style={{ display: "flex", flexWrap: "wrap", gap: 5, marginTop: 6 }}>
-                        {moves.map((m, i) => (
-                          <span key={i} style={s.moveChip}>{m}</span>
-                        ))}
+                  {(() => {
+                    const moveNames = [c.move1, c.move2, c.move3, c.move4];
+                    const hasAny = moveNames.some(Boolean);
+                    if (!hasAny) return null;
+                    return (
+                      <div>
+                        <p style={s.sectionLabel}>Moveset</p>
+                        <div style={{ display: "flex", flexDirection: "column", gap: 5, marginTop: 6 }}>
+                          {moveNames.map((name, idx) => {
+                            if (!name) return null;
+                            const md = c.moveDataList[idx];
+                            if (!md) {
+                              return (
+                                <div key={idx} style={s.moveRow}>
+                                  <span style={s.moveNum}>{idx + 1}</span>
+                                  <span style={s.moveNameText}>{name}</span>
+                                </div>
+                              );
+                            }
+                            const pt       = PokemonType.parseFrom(md.type);
+                            const catSt    = MOVE_CATEGORY_STYLE[md.category] ?? { bg: "#333", color: "#aaa", border: "#555" };
+                            const hitLine  = formatHitRoll(md);
+                            const dmgLine  = formatDamageRoll(md);
+                            const effLine  = formatMoveEffectCondition(md);
+                            return (
+                              <div key={idx} style={s.moveBlock}>
+                                <div style={s.moveBlockHeader}>
+                                  <span style={s.moveNum}>{idx + 1}</span>
+                                  <span style={s.moveNameText}>{md.name}</span>
+                                  <div style={{ display: "flex", gap: 4, alignItems: "center", marginLeft: "auto", flexShrink: 0 }}>
+                                    {pt && (
+                                      <img src={pt.symbolUrl} alt={pt.displayName} title={pt.displayName}
+                                        style={{ height: 18, objectFit: "contain" }} />
+                                    )}
+                                    <span style={{ ...s.catChip, background: catSt.bg, color: catSt.color, border: `1px solid ${catSt.border}` }}>
+                                      {md.category === "PHYSICAL" ? "Físico" : md.category === "SPECIAL" ? "Especial" : "Estado"}
+                                    </span>
+                                  </div>
+                                </div>
+                                {(hitLine || dmgLine || effLine) && (
+                                  <div style={{ display: "flex", flexDirection: "column", gap: 3, paddingLeft: 22 }}>
+                                    {hitLine  && <p style={s.moveRollLine}>{hitLine}</p>}
+                                    {dmgLine  && <p style={{ ...s.moveRollLine, color: "#f0a060" }}>{dmgLine}</p>}
+                                    {effLine  && <span style={s.effCondBadge}>{effLine}</span>}
+                                  </div>
+                                )}
+                                {md.effects.length > 0 && (
+                                  <div style={{ display: "flex", flexWrap: "wrap", gap: 4, paddingLeft: 22 }}>
+                                    {md.effects.map((ef, j) => {
+                                      const st = EFFECT_CATEGORY_STYLE[ef.category?.toUpperCase()] ?? { bg: "#333", color: "#aaa", border: "#555" };
+                                      return (
+                                        <span key={j} style={{ ...s.effectChip, background: st.bg, color: st.color, border: `1px solid ${st.border}` }}>
+                                          {formatMoveEffect(ef)}
+                                        </span>
+                                      );
+                                    })}
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    );
+                  })()}
                 </div>
               );
             })}
@@ -347,6 +420,49 @@ const s: Record<string, React.CSSProperties> = {
     padding: "3px 8px",
     fontSize: 11,
     color: "var(--text-muted)",
+  },
+  moveRow: {
+    display: "flex",
+    alignItems: "center",
+    gap: 8,
+    background: "var(--bg)",
+    borderRadius: 6,
+    padding: "6px 10px",
+  },
+  moveBlock: {
+    background: "var(--bg)",
+    border: "1px solid var(--border)",
+    borderRadius: 6,
+    padding: "8px 10px",
+    display: "flex",
+    flexDirection: "column" as const,
+    gap: 5,
+  },
+  moveBlockHeader: {
+    display: "flex",
+    alignItems: "center",
+    gap: 6,
+  },
+  moveNum: {
+    width: 16,
+    height: 16,
+    borderRadius: "50%",
+    background: "var(--border)",
+    color: "var(--text-muted)",
+    fontSize: 9,
+    fontWeight: 700,
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    flexShrink: 0,
+  },
+  moveNameText: { fontSize: 12, fontWeight: 600 },
+  catChip:      { fontSize: 9, fontWeight: 700, padding: "2px 6px", borderRadius: 3 },
+  moveRollLine: { fontSize: 11, color: "var(--text-muted)", fontStyle: "italic" },
+  effCondBadge: {
+    fontSize: 10, fontWeight: 700, color: "#e8c96a",
+    background: "#2e2510", border: "1px solid #6b520e",
+    borderRadius: 4, padding: "2px 6px", alignSelf: "flex-start" as const,
   },
   abilityBlock: {
     background: "var(--bg)",

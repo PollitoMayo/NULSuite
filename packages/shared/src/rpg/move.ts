@@ -10,10 +10,26 @@ export enum MoveCategory {
   STATUS   = "STATUS",
 }
 
+export enum Stat {
+  ATK    = "ATK",
+  DEF    = "DEF",
+  SP_ATK = "SP_ATK",
+  SP_DEF = "SP_DEF",
+  SPD    = "SPD",
+}
+
 export enum DamageStat {
   ATK    = "ATK",
   SP_ATK = "SP_ATK",
 }
+
+export const STAT_LABELS: Record<string, string> = {
+  [Stat.ATK]:    "ATK",
+  [Stat.DEF]:    "DEF",
+  [Stat.SP_ATK]: "SP.ATK",
+  [Stat.SP_DEF]: "SP.DEF",
+  [Stat.SPD]:    "SPD",
+};
 
 export const MOVE_CATEGORY_LABELS: Record<string, string> = {
   [MoveCategory.PHYSICAL]: "Físico",
@@ -45,6 +61,7 @@ export interface MoveData {
   type:            string;
   category:        string;
   hitDice:         string;
+  hitStat:         string;
   hitCondition:    string;
   damageDice:      string;
   damageStat:      string;
@@ -57,7 +74,8 @@ export interface MoveData {
 
 export function formatHitRoll(move: MoveData): string {
   if (!move.hitDice && !move.hitCondition) return "";
-  const dice = move.hitDice ? `🎯 1d${move.hitDice}` : "";
+  const stat = STAT_LABELS[move.hitStat?.toUpperCase()] ?? move.hitStat ?? STAT_LABELS[Stat.SPD];
+  const dice = move.hitDice ? `🎯 1d${move.hitDice} + ${stat}` : "";
   const cond = move.hitCondition ? parseCondition(move.hitCondition) : "";
   if (dice && cond) return `${dice} — ${cond}`;
   return dice || cond;
@@ -104,6 +122,7 @@ export function parseMoveData(
     type:            rv(row, "type"),
     category:        rv(row, "category"),
     hitDice:         rv(row, "hitdice"),
+    hitStat:         rv(row, "hitstat") || Stat.SPD,
     hitCondition:    rv(row, "hitcondition"),
     damageDice:      rv(row, "damagedice"),
     damageStat:      rv(row, "damagestat"),

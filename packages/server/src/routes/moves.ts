@@ -26,7 +26,7 @@ function buildEffectsMap(effectRows: Record<string, unknown>[]): Map<string, Rec
 
 function moveToRow(b: MoveRequest): (string | null)[] {
   return [b.id, b.name, b.entry, b.type, b.category,
-          b.hitDice, b.hitCondition, b.damageDice, b.damageStat,
+          b.hitDice, b.hitStat, b.hitCondition, b.damageDice, b.damageStat,
           b.effectDice, b.effectCondition];
 }
 
