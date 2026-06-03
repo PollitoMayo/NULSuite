@@ -1,14 +1,17 @@
 import { useEffect, useState } from "react";
 import { useApi, request } from "../hooks/useApi.js";
 import CharacterForm, { CharacterValues } from "../components/CharacterForm.js";
-import type { CharacterSheetData, SheetRow, AppendRowRequest, UpdateRowRequest } from "@nul/shared";
-import { PokemonType, parseCondition } from "@nul/shared";
+import type { CharacterSheetData, EnrichedAbility, AppendRowRequest, UpdateRowRequest } from "@nul/shared";
+import {
+  PokemonType, parseAbilityData, formatTrigger, formatEffect, formatEffectCondition,
+  EFFECT_CATEGORY_STYLE, type AbilityData,
+} from "@nul/shared";
 
 const SHEET = "CHARACTERS";
 
 interface Character extends CharacterValues {
   rowIndex:    number;
-  abilityData: SheetRow | null;
+  abilityData: AbilityData | null;
 }
 
 const SUPER_COLORS: Record<string, string> = {
@@ -35,21 +38,18 @@ function col(row: CharacterSheetData["rows"][number], key: string): string {
   return String(val);
 }
 
-function abilityObj(row: CharacterSheetData["rows"][number]): SheetRow | null {
+function extractAbility(row: CharacterSheetData["rows"][number]): AbilityData | null {
   const found = Object.keys(row).find((k) => k.toLowerCase() === "ability");
   const val = found ? row[found] : null;
-  return val && typeof val === "object" ? (val as SheetRow) : null;
-}
-
-function aCol(row: SheetRow, key: string): string {
-  const found = Object.keys(row).find((k) => k.toLowerCase() === key.toLowerCase());
-  return String(found ? (row[found] ?? "") : "");
+  if (!val || typeof val !== "object") return null;
+  const enriched = val as EnrichedAbility;
+  return parseAbilityData(enriched as Record<string, unknown>, (enriched.effects ?? []) as Record<string, unknown>[]);
 }
 
 function parseChars(data: CharacterSheetData): Character[] {
   return data.rows.map((row, i) => {
-    const moves = col(row, "moveset").split(",").map((m) => m.trim());
-    const ability = abilityObj(row);
+    const moves      = col(row, "moveset").split(",").map((m) => m.trim());
+    const abilityData = extractAbility(row);
     return {
       rowIndex:    i,
       user:        col(row, "discord"),
@@ -62,8 +62,8 @@ function parseChars(data: CharacterSheetData): Character[] {
       pokemon:     col(row, "pokemon"),
       type1:       col(row, "type1"),
       type2:       col(row, "type2"),
-      ability:     ability ? String(ability["Id"] ?? ability["id"] ?? "") : col(row, "ability"),
-      abilityData: ability,
+      ability:     abilityData?.id ?? col(row, "ability"),
+      abilityData,
       move1:       moves[0] ?? "",
       move2:       moves[1] ?? "",
       move3:       moves[2] ?? "",
@@ -196,19 +196,32 @@ export default function Characters({ userFilter, userLabel, onBack }: Props) {
 
                   {/* Ability */}
                   {c.abilityData ? (() => {
-                    const ab = c.abilityData;
-                    const name      = aCol(ab, "name");
-                    const entry     = aCol(ab, "entry");
-                    const dice      = aCol(ab, "dice");
-                    const condition = parseCondition(aCol(ab, "condition"));
+                    const ab       = c.abilityData;
+                    const rollLine = formatEffectCondition(ab);
                     return (
                       <div style={s.abilityBlock}>
                         <div style={s.abilityHeader}>
-                          <p style={s.abilityName}>{name}</p>
-                          {dice && <span style={s.diceBadge}>🎲 1d{dice}</span>}
+                          <p style={s.abilityName}>{ab.name}</p>
                         </div>
-                        {condition && <p style={s.abilityCondition}>✓ {condition}</p>}
-                        {entry && <p style={s.abilityEntry}>{entry}</p>}
+                        {ab.triggerEvent && (
+                          <p style={s.abilityTrigger}>⚡ {formatTrigger(ab)}</p>
+                        )}
+                        {rollLine && (
+                          <p style={s.abilityCondition}>{rollLine}</p>
+                        )}
+                        {ab.effects.length > 0 && (
+                          <div style={s.chipRow}>
+                            {ab.effects.map((ef, i) => {
+                              const st = EFFECT_CATEGORY_STYLE[ef.category?.toUpperCase()] ?? { bg: "#333", color: "#aaa", border: "#555" };
+                              return (
+                                <span key={i} style={{ ...s.effectChip, background: st.bg, color: st.color, border: `1px solid ${st.border}` }}>
+                                  {formatEffect(ef)}
+                                </span>
+                              );
+                            })}
+                          </div>
+                        )}
+                        {ab.entry && <p style={s.abilityEntry}>{ab.entry}</p>}
                       </div>
                     );
                   })() : (
@@ -350,16 +363,14 @@ const s: Record<string, React.CSSProperties> = {
     alignItems: "center",
     gap: 8,
   },
-  abilityName:      { fontSize: 13, fontWeight: 700 },
-  diceBadge: {
-    fontSize: 11,
-    fontWeight: 600,
-    background: "var(--surface)",
-    border: "1px solid var(--border)",
-    borderRadius: 4,
-    padding: "2px 7px",
-    whiteSpace: "nowrap" as const,
+  abilityName:    { fontSize: 13, fontWeight: 700 },
+  abilityTrigger: { fontSize: 11, color: "var(--text-muted)", fontStyle: "italic" },
+  abilityCondition: {
+    fontSize: 11, fontWeight: 700, color: "#e8c96a",
+    background: "#2e2510", border: "1px solid #6b520e",
+    borderRadius: 4, padding: "3px 8px", alignSelf: "flex-start" as const,
   },
-  abilityCondition: { fontSize: 11, color: "var(--text)", fontWeight: 500 },
-  abilityEntry:     { fontSize: 12, color: "var(--text-muted)", lineHeight: 1.5 },
+  abilityEntry: { fontSize: 12, color: "var(--text-muted)", lineHeight: 1.5 },
+  chipRow:      { display: "flex", flexWrap: "wrap" as const, gap: 4, marginTop: 2 },
+  effectChip:   { fontSize: 10, fontWeight: 700, padding: "3px 8px", borderRadius: 4 },
 };

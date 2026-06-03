@@ -8,8 +8,13 @@ export interface SheetData {
   rows: SheetRow[];
 }
 
+export interface EnrichedAbility {
+  [key: string]: string | number | boolean | null | SheetRow[];
+  effects: SheetRow[];
+}
+
 export type CharacterRow = {
-  [key: string]: string | number | boolean | null | SheetRow;
+  [key: string]: string | number | boolean | null | EnrichedAbility;
 };
 
 export interface CharacterSheetData {

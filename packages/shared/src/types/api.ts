@@ -19,6 +19,45 @@ export interface LoginResponse {
   token: string;
 }
 
+export interface AbilityEffectRequest {
+  subject:  string;
+  category: string;
+  value:    string;
+}
+
+export interface AbilityRequest {
+  id:              string;
+  name:            string;
+  entry:           string;
+  triggerEvent:    string;
+  triggerSubject:  string;
+  triggerParam:    string;
+  effectDice:      string;
+  effectCondition: string;
+  effects:         AbilityEffectRequest[];
+}
+
+export interface MoveEffectRequest {
+  subject:  string;
+  category: string;
+  value:    string;
+}
+
+export interface MoveRequest {
+  id:              string;
+  name:            string;
+  entry:           string;
+  type:            string;
+  category:        string;
+  hitDice:         string;
+  hitCondition:    string;
+  damageDice:      string;
+  damageStat:      string;
+  effectDice:      string;
+  effectCondition: string;
+  effects:         MoveEffectRequest[];
+}
+
 export interface BotStatus {
   online: boolean;
   tag: string | null;

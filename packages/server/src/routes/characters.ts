@@ -1,5 +1,5 @@
 import type { FastifyInstance } from "fastify";
-import type { ApiResponse, CharacterSheetData, SheetRow } from "@nul/shared";
+import type { ApiResponse, CharacterSheetData, SheetRow, EnrichedAbility } from "@nul/shared";
 import { getSheetData } from "../services/sheets.js";
 
 function colKey(row: SheetRow, key: string): string {
@@ -8,21 +8,30 @@ function colKey(row: SheetRow, key: string): string {
 }
 
 async function buildEnriched(filterDiscord?: string): Promise<CharacterSheetData> {
-  const [charSheet, abilitySheet] = await Promise.all([
+  const [charSheet, abilitySheet, effectSheet] = await Promise.all([
     getSheetData("CHARACTERS"),
     getSheetData("ABILITIES"),
+    getSheetData("EFFECTS"),
   ]);
 
-  const abilityMap = new Map<string, SheetRow>();
+  // effects map: abilityId -> effect rows
+  const effectsMap = new Map<string, SheetRow[]>();
+  effectSheet.rows.forEach((row) => {
+    const id = colKey(row, "abilityid").toLowerCase();
+    if (!id) return;
+    if (!effectsMap.has(id)) effectsMap.set(id, []);
+    effectsMap.get(id)!.push(row);
+  });
+
+  // ability map: abilityId -> ability row + effects
+  const abilityMap = new Map<string, EnrichedAbility>();
   abilitySheet.rows.forEach((row) => {
     const id = colKey(row, "id").toLowerCase();
-    if (id) abilityMap.set(id, row);
+    if (id) abilityMap.set(id, { ...row, effects: effectsMap.get(id) ?? [] } as EnrichedAbility);
   });
 
   const sourceRows = filterDiscord
-    ? charSheet.rows.filter((row) =>
-        colKey(row, "discord").toLowerCase() === filterDiscord.toLowerCase()
-      )
+    ? charSheet.rows.filter((r) => colKey(r, "discord").toLowerCase() === filterDiscord.toLowerCase())
     : charSheet.rows;
 
   const rows = sourceRows.map((row) => {

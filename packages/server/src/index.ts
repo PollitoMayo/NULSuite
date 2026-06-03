@@ -4,6 +4,8 @@ import jwtPlugin from "./plugins/jwt.js";
 import authRoutes from "./routes/auth.js";
 import sheetsRoutes from "./routes/sheets.js";
 import charactersRoutes from "./routes/characters.js";
+import abilitiesRoutes from "./routes/abilities.js";
+import movesRoutes     from "./routes/moves.js";
 
 (async () => {
   const app = Fastify({ logger: true });
@@ -14,6 +16,8 @@ import charactersRoutes from "./routes/characters.js";
   await app.register(authRoutes, { prefix: "/api" });
   await app.register(sheetsRoutes, { prefix: "/api" });
   await app.register(charactersRoutes, { prefix: "/api" });
+  await app.register(abilitiesRoutes,  { prefix: "/api" });
+  await app.register(movesRoutes,      { prefix: "/api" });
 
   app.get("/health", async () => ({ ok: true }));
 

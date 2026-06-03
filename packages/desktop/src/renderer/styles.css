@@ -117,14 +117,15 @@ button.icon-btn:hover { background: var(--surface-hover); color: var(--text); }
 .back-btn:hover { color: var(--text); border-color: var(--text-muted); background: var(--surface-hover); }
 
 /* ── Inputs ───────────────────────────────────────────────── */
-input, select {
+input, select, textarea {
   background: var(--surface); border: 1px solid var(--border);
   border-radius: 6px; color: var(--text); padding: 9px 12px;
   font-size: 14px; outline: none; width: 100%;
   transition: border-color 0.15s;
+  font-family: inherit;
 }
-input:focus, select:focus { border-color: var(--accent); }
-input::placeholder { color: var(--text-muted); }
+input:focus, select:focus, textarea:focus { border-color: var(--accent); }
+input::placeholder, textarea::placeholder { color: var(--text-muted); }
 select option { background: var(--surface); }
 label {
   display: block; font-size: 11px; font-weight: 700;
@@ -153,7 +154,8 @@ label {
   max-height: 90vh; display: flex; flex-direction: column;
 }
 .modal-header {
-  padding: 22px 24px 0;
+  padding: 18px 24px 0;
+  display: flex; align-items: center; justify-content: space-between;
   font-size: 18px; font-weight: 700; flex-shrink: 0;
 }
 .modal-body { padding: 20px 24px; overflow-y: auto; flex: 1; }

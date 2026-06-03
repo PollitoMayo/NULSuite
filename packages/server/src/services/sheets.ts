@@ -93,6 +93,43 @@ export async function deleteRow(sheetName: string, rowIndex: number): Promise<vo
   });
 }
 
+export async function appendRows(sheetName: string, values: (string | number | boolean | null)[][]): Promise<void> {
+  if (values.length === 0) return;
+  const sheets = getClient();
+  await sheets.spreadsheets.values.append({
+    spreadsheetId: spreadsheetId(),
+    range: sheetName,
+    valueInputOption: "USER_ENTERED",
+    requestBody: { values },
+  });
+}
+
+export async function deleteRows(sheetName: string, rowIndices: number[]): Promise<void> {
+  if (rowIndices.length === 0) return;
+  const sheets = getClient();
+  const meta = await sheets.spreadsheets.get({ spreadsheetId: spreadsheetId() });
+  const sheet = meta.data.sheets?.find((s) => s.properties?.title === sheetName);
+  if (!sheet?.properties?.sheetId) throw new Error(`Sheet "${sheetName}" not found`);
+
+  // Delete highest indices first so earlier deletions don't shift later targets
+  const sorted = [...rowIndices].sort((a, b) => b - a);
+  await sheets.spreadsheets.batchUpdate({
+    spreadsheetId: spreadsheetId(),
+    requestBody: {
+      requests: sorted.map((rowIndex) => ({
+        deleteDimension: {
+          range: {
+            sheetId: sheet.properties!.sheetId!,
+            dimension: "ROWS",
+            startIndex: rowIndex + 1,
+            endIndex:   rowIndex + 2,
+          },
+        },
+      })),
+    },
+  });
+}
+
 export async function listSheets(): Promise<string[]> {
   const sheets = getClient();
   const res = await sheets.spreadsheets.get({ spreadsheetId: spreadsheetId() });

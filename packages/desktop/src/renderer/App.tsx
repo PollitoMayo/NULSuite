@@ -2,16 +2,22 @@ import { useState } from "react";
 import Login from "./pages/Login.js";
 import Users, { User } from "./pages/Users.js";
 import Characters from "./pages/Characters.js";
+import Abilities from "./pages/Abilities.js";
+import Moves from "./pages/Moves.js";
 import { getToken, clearToken } from "./hooks/useApi.js";
 
 type View =
   | { page: "users" }
   | { page: "characters" }
+  | { page: "abilities" }
+  | { page: "moves" }
   | { page: "user-characters"; user: User };
 
 const NAV = [
-  { id: "users",      label: "Usuarios",   icon: "👥" },
-  { id: "characters", label: "Personajes", icon: "⚔️" },
+  { id: "users",      label: "Usuarios",    icon: "👥" },
+  { id: "characters", label: "Personajes",  icon: "⚔️" },
+  { id: "abilities",  label: "Habilidades", icon: "⚡" },
+  { id: "moves",      label: "Movimientos", icon: "🥊" },
 ] as const;
 
 export default function App() {
@@ -24,6 +30,8 @@ export default function App() {
 
   function renderContent() {
     if (view.page === "characters") return <Characters />;
+    if (view.page === "abilities")  return <Abilities />;
+    if (view.page === "moves")      return <Moves />;
     if (view.page === "user-characters") {
       return (
         <Characters
