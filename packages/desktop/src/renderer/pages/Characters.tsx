@@ -1,10 +1,15 @@
 import { useEffect, useState } from "react";
 import { useApi, request } from "../hooks/useApi.js";
 import CharacterForm, { CharacterValues } from "../components/CharacterForm.js";
-import type { SheetData, AppendRowRequest, UpdateRowRequest } from "@nul/shared";
-import { PokemonType } from "@nul/shared";
+import type { CharacterSheetData, SheetRow, AppendRowRequest, UpdateRowRequest } from "@nul/shared";
+import { PokemonType, parseCondition } from "@nul/shared";
 
 const SHEET = "CHARACTERS";
+
+interface Character extends CharacterValues {
+  rowIndex:    number;
+  abilityData: SheetRow | null;
+}
 
 const SUPER_COLORS: Record<string, string> = {
   "Héroe":"#5865f2", "Villano":"#ed4245", "Ciudadano":"#8e9297",
@@ -23,32 +28,47 @@ function TypeBadge({ type }: { type: string }) {
   );
 }
 
-function col(row: SheetData["rows"][number], key: string): string {
+function col(row: CharacterSheetData["rows"][number], key: string): string {
+  const found = Object.keys(row).find((k) => k.toLowerCase() === key.toLowerCase());
+  const val = found ? row[found] : null;
+  if (val === null || val === undefined || typeof val === "object") return "";
+  return String(val);
+}
+
+function abilityObj(row: CharacterSheetData["rows"][number]): SheetRow | null {
+  const found = Object.keys(row).find((k) => k.toLowerCase() === "ability");
+  const val = found ? row[found] : null;
+  return val && typeof val === "object" ? (val as SheetRow) : null;
+}
+
+function aCol(row: SheetRow, key: string): string {
   const found = Object.keys(row).find((k) => k.toLowerCase() === key.toLowerCase());
   return String(found ? (row[found] ?? "") : "");
 }
 
-function parseChars(data: SheetData): Character[] {
+function parseChars(data: CharacterSheetData): Character[] {
   return data.rows.map((row, i) => {
     const moves = col(row, "moveset").split(",").map((m) => m.trim());
+    const ability = abilityObj(row);
     return {
-      rowIndex: i,
-      user:      col(row, "discord"),
-      name:      col(row, "name"),
-      super:     col(row, "super"),
-      age:       col(row, "age"),
-      birthday:  col(row, "birthday"),
-      gender:    col(row, "gender"),
-      height:    col(row, "height"),
-      pokemon:   col(row, "pokemon"),
-      type1:     col(row, "type1"),
-      type2:     col(row, "type2"),
-      ability:   col(row, "ability"),
-      move1:     moves[0] ?? "",
-      move2:     moves[1] ?? "",
-      move3:     moves[2] ?? "",
-      move4:     moves[3] ?? "",
-      archetype: col(row, "archetype"),
+      rowIndex:    i,
+      user:        col(row, "discord"),
+      name:        col(row, "name"),
+      super:       col(row, "super"),
+      age:         col(row, "age"),
+      birthday:    col(row, "birthday"),
+      gender:      col(row, "gender"),
+      height:      col(row, "height"),
+      pokemon:     col(row, "pokemon"),
+      type1:       col(row, "type1"),
+      type2:       col(row, "type2"),
+      ability:     ability ? String(ability["Id"] ?? ability["id"] ?? "") : col(row, "ability"),
+      abilityData: ability,
+      move1:       moves[0] ?? "",
+      move2:       moves[1] ?? "",
+      move3:       moves[2] ?? "",
+      move4:       moves[3] ?? "",
+      archetype:   col(row, "archetype"),
     };
   });
 }
@@ -66,7 +86,7 @@ interface Props {
 }
 
 export default function Characters({ userFilter, userLabel, onBack }: Props) {
-  const { data, loading, error, call } = useApi<SheetData>();
+  const { data, loading, error, call } = useApi<CharacterSheetData>();
   const [showAdd, setShowAdd]     = useState(false);
   const [editing, setEditing]     = useState<Character | null>(null);
   const [saving, setSaving]       = useState(false);
@@ -78,7 +98,7 @@ export default function Characters({ userFilter, userLabel, onBack }: Props) {
 
   function refresh() {
     if (userFilter) call(`/user/${encodeURIComponent(userFilter)}/characters`);
-    else call(`/sheets/${SHEET}`);
+    else call(`/characters`);
   }
 
   async function handleAdd(v: CharacterValues) {
@@ -163,9 +183,10 @@ export default function Characters({ userFilter, userLabel, onBack }: Props) {
 
                   {/* Pokémon */}
                   <div style={s.pokemonRow}>
-                    <div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png"
+                        alt="" style={{ width: 24, height: 24, imageRendering: "pixelated" }} />
                       <p style={s.pokemonName}>{c.pokemon}</p>
-                      <p style={s.ability}>{c.ability}</p>
                     </div>
                     <div className="types-wrap" style={{ justifyContent: "flex-end" }}>
                       <TypeBadge type={c.type1} />
@@ -173,16 +194,37 @@ export default function Characters({ userFilter, userLabel, onBack }: Props) {
                     </div>
                   </div>
 
+                  {/* Ability */}
+                  {c.abilityData ? (() => {
+                    const ab = c.abilityData;
+                    const name      = aCol(ab, "name");
+                    const entry     = aCol(ab, "entry");
+                    const dice      = aCol(ab, "dice");
+                    const condition = parseCondition(aCol(ab, "condition"));
+                    return (
+                      <div style={s.abilityBlock}>
+                        <div style={s.abilityHeader}>
+                          <p style={s.abilityName}>{name}</p>
+                          {dice && <span style={s.diceBadge}>🎲 1d{dice}</span>}
+                        </div>
+                        {condition && <p style={s.abilityCondition}>✓ {condition}</p>}
+                        {entry && <p style={s.abilityEntry}>{entry}</p>}
+                      </div>
+                    );
+                  })() : (
+                    c.ability && <p style={s.ability}>{c.ability}</p>
+                  )}
+
                   {/* Stats */}
                   <div style={s.statsGrid}>
                     {[
-                      { label: "Edad",      value: c.age ? `${c.age} años` : "—" },
-                      { label: "Cumpleaños",value: c.birthday || "—" },
-                      { label: "Género",    value: c.gender || "—" },
-                      { label: "Altura",    value: c.height ? `${c.height} cm` : "—" },
-                    ].map(({ label, value }) => (
+                      { icon: "🎂", label: "Edad",       value: c.age ? `${c.age} años` : "—" },
+                      { icon: "📅", label: "Cumpleaños", value: c.birthday || "—" },
+                      { icon: "⚧",  label: "Género",     value: c.gender || "—" },
+                      { icon: "📏", label: "Altura",     value: c.height ? `${c.height} cm` : "—" },
+                    ].map(({ icon, label, value }) => (
                       <div key={label} style={s.statChip}>
-                        <p style={s.statLabel}>{label}</p>
+                        <p style={s.statLabel}>{icon} {label}</p>
                         <p style={s.statValue}>{value}</p>
                       </div>
                     ))}
@@ -293,4 +335,31 @@ const s: Record<string, React.CSSProperties> = {
     fontSize: 11,
     color: "var(--text-muted)",
   },
+  abilityBlock: {
+    background: "var(--bg)",
+    border: "1px solid var(--border)",
+    borderRadius: 8,
+    padding: "10px 12px",
+    display: "flex",
+    flexDirection: "column",
+    gap: 5,
+  },
+  abilityHeader: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    gap: 8,
+  },
+  abilityName:      { fontSize: 13, fontWeight: 700 },
+  diceBadge: {
+    fontSize: 11,
+    fontWeight: 600,
+    background: "var(--surface)",
+    border: "1px solid var(--border)",
+    borderRadius: 4,
+    padding: "2px 7px",
+    whiteSpace: "nowrap" as const,
+  },
+  abilityCondition: { fontSize: 11, color: "var(--text)", fontWeight: 500 },
+  abilityEntry:     { fontSize: 12, color: "var(--text-muted)", lineHeight: 1.5 },
 };

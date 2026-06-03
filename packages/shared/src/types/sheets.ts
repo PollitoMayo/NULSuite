@@ -8,6 +8,16 @@ export interface SheetData {
   rows: SheetRow[];
 }
 
+export type CharacterRow = {
+  [key: string]: string | number | boolean | null | SheetRow;
+};
+
+export interface CharacterSheetData {
+  sheetName: string;
+  headers: string[];
+  rows: CharacterRow[];
+}
+
 export interface AppendRowRequest {
   sheetName: string;
   values: (string | number | boolean | null)[];
