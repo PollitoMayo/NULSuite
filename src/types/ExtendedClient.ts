@@ -10,6 +10,7 @@ export class ExtendedClient extends Client {
         GatewayIntentBits.Guilds,
         GatewayIntentBits.GuildMessages,
         GatewayIntentBits.MessageContent,
+        GatewayIntentBits.GuildMembers, // privileged — enable in Discord Developer Portal
       ],
     });
   }
