@@ -1,15 +1,10 @@
 import { useState } from "react";
 import Login from "./pages/Login.js";
-import SheetViewer from "./pages/SheetViewer.js";
+import Users from "./pages/Users.js";
 import { getToken, clearToken } from "./hooks/useApi.js";
 
 export default function App() {
   const [authed, setAuthed] = useState(!!getToken());
-
-  function handleLogout() {
-    clearToken();
-    setAuthed(false);
-  }
 
   if (!authed) return <Login onLogin={() => setAuthed(true)} />;
 
@@ -17,11 +12,15 @@ export default function App() {
     <div style={{ display: "flex", flexDirection: "column", height: "100vh" }}>
       <header style={styles.header}>
         <span style={styles.brand}>NUL Admin</span>
-        <button className="ghost" style={{ fontSize: 13, padding: "6px 12px" }} onClick={handleLogout}>
-          Sign out
+        <button
+          className="ghost"
+          style={{ fontSize: 13, padding: "6px 12px" }}
+          onClick={() => { clearToken(); setAuthed(false); }}
+        >
+          Cerrar sesión
         </button>
       </header>
-      <SheetViewer />
+      <Users />
     </div>
   );
 }
@@ -31,7 +30,7 @@ const styles: Record<string, React.CSSProperties> = {
     display: "flex",
     alignItems: "center",
     justifyContent: "space-between",
-    padding: "0 20px",
+    padding: "0 24px",
     height: 52,
     background: "var(--surface)",
     borderBottom: "1px solid var(--border)",
