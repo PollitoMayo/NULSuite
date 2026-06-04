@@ -42,7 +42,7 @@ export default function Login({ onLogin }: Props) {
         <input
           style={{ width: "100%", marginBottom: 12 }}
           type="text"
-          placeholder="Username"
+          placeholder="Usuario"
           value={username}
           onChange={(e) => setUsername(e.target.value)}
           required
@@ -50,13 +50,13 @@ export default function Login({ onLogin }: Props) {
         <input
           style={{ width: "100%", marginBottom: 20 }}
           type="password"
-          placeholder="Password"
+          placeholder="Contraseña"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
         />
         <button type="submit" style={{ width: "100%" }} disabled={loading}>
-          {loading ? "Signing in…" : "Sign in"}
+          {loading ? "Iniciando sesión…" : "Iniciar sesión"}
         </button>
       </form>
     </div>

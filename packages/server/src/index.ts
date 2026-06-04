@@ -1,4 +1,10 @@
+import * as Sentry from "@sentry/node";
 import Fastify from "fastify";
+
+Sentry.init({
+  dsn: process.env.SENTRY_DSN,
+  sendDefaultPii: true,
+});
 import corsPlugin from "./plugins/cors.js";
 import jwtPlugin from "./plugins/jwt.js";
 import authRoutes from "./routes/auth.js";

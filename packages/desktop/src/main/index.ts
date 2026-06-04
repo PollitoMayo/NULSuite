@@ -1,6 +1,11 @@
+import * as Sentry from "@sentry/electron/main";
 import { app, BrowserWindow, shell } from "electron";
 import { join } from "path";
 import { is } from "@electron-toolkit/utils";
+
+Sentry.init({
+  dsn: process.env.SENTRY_DSN,
+});
 
 let mainWindow: BrowserWindow | null = null;
 
