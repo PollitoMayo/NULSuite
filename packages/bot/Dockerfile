@@ -5,7 +5,7 @@ WORKDIR /app
 COPY pnpm-workspace.yaml pnpm-lock.yaml package.json tsconfig.base.json ./
 COPY packages/shared/package.json ./packages/shared/
 COPY packages/bot/package.json ./packages/bot/
-RUN pnpm install --frozen-lockfile
+RUN pnpm install
 
 COPY packages/shared/ ./packages/shared/
 COPY packages/bot/ ./packages/bot/
