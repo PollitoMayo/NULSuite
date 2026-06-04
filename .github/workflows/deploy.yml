@@ -48,8 +48,11 @@ jobs:
 
   # ── Desktop: build Electron app and publish GitHub Release ────
   desktop:
-    name: Desktop release
-    runs-on: macos-latest
+    name: Desktop release (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [macos-latest, windows-latest]
     permissions:
       contents: write
     steps:
@@ -69,13 +72,14 @@ jobs:
       - run: pnpm --filter @nul/shared build
 
       - name: Set version
+        shell: bash
         run: |
           BASE=$(node -p "require('./packages/desktop/package.json').version.split('.').slice(0,2).join('.')")
           VERSION="${BASE}.${{ github.run_number }}"
           cd packages/desktop && npm version "$VERSION" --no-git-tag-version
 
       - name: Package and publish
-        run: pnpm --filter @nul/desktop package
+        run: pnpm --filter @nul/desktop exec electron-vite build && pnpm --filter @nul/desktop exec electron-builder --publish always
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SENTRY_DSN: ${{ secrets.SENTRY_DSN }}

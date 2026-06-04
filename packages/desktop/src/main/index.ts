@@ -12,6 +12,7 @@ let mainWindow: BrowserWindow | null = null;
 
 function createWindow(icon: string): void {
   mainWindow = new BrowserWindow({
+    title: "NUL Admin",
     width: 1280,
     height: 800,
     minWidth: 900,
@@ -62,6 +63,8 @@ function setupAutoUpdater() {
     if (!is.dev) autoUpdater.checkForUpdates();
   });
 }
+
+app.setName("NUL Admin");
 
 app.whenReady().then(() => {
   const iconPng = join(app.getAppPath(), "resources/icon.png");

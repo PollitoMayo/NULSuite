@@ -22,6 +22,8 @@ mac:
 win:
   icon: resources/icon.png
   executableName: nul-admin
+  target:
+    - nsis
 linux:
   icon: resources/icon.png
   target:
