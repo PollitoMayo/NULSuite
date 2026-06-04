@@ -1,16 +1,22 @@
 import { FormEvent, useState } from "react";
 import {
-  TriggerEvent, Subject, EffectCategory,
+  TriggerEvent, Subject, EffectCategory, StatusEffect, ConditionEffect,
   TRIGGER_EVENT_LABELS, SUBJECT_LABELS, EFFECT_VALUE_LABELS, EFFECTS_BY_CATEGORY,
   TRIGGERS_WITH_SUBJECT,
-  type AbilityData, type AbilityEffectData,
+  type AbilityData, type AbilityEffectData, type AbilityTriggerData,
 } from "@nul/shared";
+
+const STATUS_PARAM_OPTIONS = [
+  ...Object.values(StatusEffect),
+  ...Object.values(ConditionEffect),
+];
 
 const EFFECT_CATEGORY_LABELS: Record<string, string> = {
   [EffectCategory.STATUS]:       "Estado",
   [EffectCategory.BUFF_DEBUFF]:  "Buff / Debuff",
   [EffectCategory.CONDITION]:    "Condición",
   [EffectCategory.FIELD_STATUS]: "Estado de campo",
+  [EffectCategory.CURE]:         "Curación",
 };
 
 interface Props {
@@ -22,19 +28,40 @@ interface Props {
   onClose:  () => void;
 }
 
+const EMPTY_TRIGGER: AbilityTriggerData = { event: "", subject: "", param: "" };
+
 const EMPTY_ABILITY: AbilityData = {
-  id: "", name: "", entry: "", triggerEvent: "", triggerSubject: "",
-  triggerParam: "", effectDice: "", effectCondition: "", effects: [],
+  id: "", name: "", entry: "", triggers: [], effectDice: "", effectCondition: "", effects: [],
 };
 
 export default function AbilityForm({ initial, isEdit, saving, error, onSubmit, onClose }: Props) {
-  const [form, setForm]       = useState<AbilityData>(initial ?? EMPTY_ABILITY);
-  const [effects, setEffects] = useState<AbilityEffectData[]>(initial?.effects ?? []);
+  const [form, setForm]         = useState<AbilityData>(initial ?? EMPTY_ABILITY);
+  const [triggers, setTriggers] = useState<AbilityTriggerData[]>(initial?.triggers ?? []);
+  const [effects, setEffects]   = useState<AbilityEffectData[]>(initial?.effects ?? []);
 
   function set(key: keyof AbilityData, value: string) {
     setForm((f) => ({ ...f, [key]: value }));
   }
 
+  // ---- triggers ----
+  function addTrigger() {
+    setTriggers((t) => [...t, { ...EMPTY_TRIGGER }]);
+  }
+
+  function removeTrigger(i: number) {
+    setTriggers((t) => t.filter((_, idx) => idx !== i));
+  }
+
+  function setTrigger(i: number, key: keyof AbilityTriggerData, value: string) {
+    setTriggers((t) => t.map((row, idx) => {
+      if (idx !== i) return row;
+      const updated = { ...row, [key]: value };
+      if (key === "event") { updated.subject = ""; updated.param = ""; }
+      return updated;
+    }));
+  }
+
+  // ---- effects ----
   function addEffect() {
     setEffects((e) => [...e, { subject: Subject.TARGET, category: EffectCategory.STATUS, value: "" }]);
   }
@@ -54,11 +81,8 @@ export default function AbilityForm({ initial, isEdit, saving, error, onSubmit, 
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    await onSubmit({ ...form, effects });
+    await onSubmit({ ...form, triggers, effects });
   }
-
-  const needsSubject = TRIGGERS_WITH_SUBJECT.has(form.triggerEvent);
-  const needsParam   = form.triggerEvent === TriggerEvent.USE_MOVE;
 
   return (
     <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 20 }}>
@@ -82,38 +106,71 @@ export default function AbilityForm({ initial, isEdit, saving, error, onSubmit, 
           rows={3} style={{ resize: "vertical" }} />
       </div>
 
-      {/* Trigger */}
+      {/* Triggers */}
       <fieldset style={s.fieldset}>
         <legend style={s.legend}>Activación</legend>
-        <div style={s.row}>
-          <div style={{ flex: 1 }}>
-            <label>Evento *</label>
-            <select value={form.triggerEvent} onChange={(e) => set("triggerEvent", e.target.value)} required>
-              <option value="">— Seleccionar —</option>
-              {Object.values(TriggerEvent).map((v) => (
-                <option key={v} value={v}>{TRIGGER_EVENT_LABELS[v] ?? v}</option>
-              ))}
-            </select>
-          </div>
-          {needsSubject && (
-            <div style={{ flex: "0 0 130px" }}>
-              <label>Sujeto</label>
-              <select value={form.triggerSubject} onChange={(e) => set("triggerSubject", e.target.value)}>
-                <option value="">—</option>
-                {Object.values(Subject).map((v) => (
-                  <option key={v} value={v}>{SUBJECT_LABELS[v] ?? v}</option>
-                ))}
-              </select>
-            </div>
-          )}
-        </div>
-        {needsParam && (
-          <div style={{ marginTop: 10 }}>
-            <label>Movimiento</label>
-            <input placeholder="ej: flamethrower" value={form.triggerParam}
-              onChange={(e) => set("triggerParam", e.target.value)} />
-          </div>
+        {triggers.length === 0 && (
+          <p style={{ fontSize: 12, color: "var(--text-muted)", margin: "0 0 10px" }}>
+            Sin disparadores — agrega al menos uno.
+          </p>
         )}
+        {triggers.map((tr, i) => {
+          const needsSubject    = TRIGGERS_WITH_SUBJECT.has(tr.event);
+          const needsMoveParam  = tr.event === TriggerEvent.USE_MOVE;
+          const needsStatusParam = tr.event === TriggerEvent.ON_SPECIFIC_STATUS;
+          return (
+            <div key={i} style={{ marginBottom: 12, paddingBottom: 12, borderBottom: i < triggers.length - 1 ? "1px solid var(--border)" : "none" }}>
+              <div style={s.row}>
+                <div style={{ flex: 1 }}>
+                  <label style={s.smLabel}>Evento *</label>
+                  <select value={tr.event} onChange={(e) => setTrigger(i, "event", e.target.value)} required>
+                    <option value="">— Seleccionar —</option>
+                    {Object.values(TriggerEvent).map((v) => (
+                      <option key={v} value={v}>{TRIGGER_EVENT_LABELS[v] ?? v}</option>
+                    ))}
+                  </select>
+                </div>
+                {needsSubject && (
+                  <div style={{ flex: "0 0 130px" }}>
+                    <label style={s.smLabel}>Sujeto</label>
+                    <select value={tr.subject} onChange={(e) => setTrigger(i, "subject", e.target.value)}>
+                      <option value="">—</option>
+                      {Object.values(Subject).map((v) => (
+                        <option key={v} value={v}>{SUBJECT_LABELS[v] ?? v}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+                <div style={{ display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
+                  <label style={s.smLabel}>&nbsp;</label>
+                  <button type="button" className="ghost" style={{ padding: "6px 10px", color: "var(--danger)" }}
+                    onClick={() => removeTrigger(i)}>✕</button>
+                </div>
+              </div>
+              {needsMoveParam && (
+                <div style={{ marginTop: 8 }}>
+                  <label style={s.smLabel}>Movimiento</label>
+                  <input placeholder="ej: flamethrower" value={tr.param}
+                    onChange={(e) => setTrigger(i, "param", e.target.value)} />
+                </div>
+              )}
+              {needsStatusParam && (
+                <div style={{ marginTop: 8 }}>
+                  <label style={s.smLabel}>Estado específico</label>
+                  <select value={tr.param} onChange={(e) => setTrigger(i, "param", e.target.value)}>
+                    <option value="">— Seleccionar —</option>
+                    {STATUS_PARAM_OPTIONS.map((v) => (
+                      <option key={v} value={v}>{EFFECT_VALUE_LABELS[v] ?? v}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+            </div>
+          );
+        })}
+        <button type="button" className="ghost" style={{ fontSize: 12, marginTop: 4 }} onClick={addTrigger}>
+          + Agregar disparador
+        </button>
       </fieldset>
 
       {/* Effect roll */}
@@ -146,8 +203,8 @@ export default function AbilityForm({ initial, isEdit, saving, error, onSubmit, 
           </p>
         )}
         {effects.map((ef, i) => {
-          const options    = EFFECTS_BY_CATEGORY[ef.category] ?? [];
-          const isField    = ef.category === EffectCategory.FIELD_STATUS;
+          const options = EFFECTS_BY_CATEGORY[ef.category] ?? [];
+          const isField = ef.category === EffectCategory.FIELD_STATUS;
           return (
             <div key={i} style={{ ...s.row, marginBottom: 8 }}>
               {!isField && (

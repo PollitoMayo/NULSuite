@@ -25,13 +25,17 @@ export interface AbilityEffectRequest {
   value:    string;
 }
 
+export interface AbilityTriggerRequest {
+  event:   string;
+  subject: string;
+  param:   string;
+}
+
 export interface AbilityRequest {
   id:              string;
   name:            string;
   entry:           string;
-  triggerEvent:    string;
-  triggerSubject:  string;
-  triggerParam:    string;
+  triggers:        AbilityTriggerRequest[];
   effectDice:      string;
   effectCondition: string;
   effects:         AbilityEffectRequest[];

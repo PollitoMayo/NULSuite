@@ -260,8 +260,12 @@ export default function Characters({ userFilter, userLabel, onBack }: Props) {
                         <div style={s.abilityHeader}>
                           <p style={s.abilityName}>{ab.name}</p>
                         </div>
-                        {ab.triggerEvent && (
-                          <p style={s.abilityTrigger}>⚡ {formatTrigger(ab)}</p>
+                        {(ab.triggers ?? []).length > 0 && (
+                          <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                            {(ab.triggers ?? []).map((tr, i) => (
+                              <p key={i} style={s.abilityTrigger}>⚡ {formatTrigger(tr)}</p>
+                            ))}
+                          </div>
                         )}
                         {rollLine && (
                           <p style={s.abilityCondition}>{rollLine}</p>

@@ -10,7 +10,8 @@ export interface SheetData {
 
 export interface EnrichedAbility {
   [key: string]: string | number | boolean | null | SheetRow[];
-  effects: SheetRow[];
+  effects:  SheetRow[];
+  triggers: SheetRow[];
 }
 
 export type EnrichedMove = EnrichedAbility;

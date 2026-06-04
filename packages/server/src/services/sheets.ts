@@ -24,12 +24,18 @@ const spreadsheetId = () => {
 
 export async function getSheetData(sheetName: string): Promise<SheetData> {
   const sheets = getClient();
-  const res = await sheets.spreadsheets.values.get({
-    spreadsheetId: spreadsheetId(),
-    range: sheetName,
-  });
+  let values: string[][] | null | undefined;
+  try {
+    const res = await sheets.spreadsheets.values.get({
+      spreadsheetId: spreadsheetId(),
+      range: sheetName,
+    });
+    values = res.data.values;
+  } catch {
+    return { sheetName, headers: [], rows: [] };
+  }
 
-  const [headerRow, ...dataRows] = res.data.values ?? [];
+  const [headerRow, ...dataRows] = values ?? [];
   const headers: string[] = headerRow ?? [];
 
   const rows: SheetRow[] = (dataRows ?? []).map((row) => {

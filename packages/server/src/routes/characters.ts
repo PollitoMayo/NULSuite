@@ -8,10 +8,11 @@ function colKey(row: SheetRow, key: string): string {
 }
 
 async function buildEnriched(filterDiscord?: string): Promise<CharacterSheetData> {
-  const [charSheet, abilitySheet, effectSheet, moveSheet, moveEffectSheet, archetypeSheet] = await Promise.all([
+  const [charSheet, abilitySheet, effectSheet, triggerSheet, moveSheet, moveEffectSheet, archetypeSheet] = await Promise.all([
     getSheetData("CHARACTERS"),
     getSheetData("ABILITIES"),
     getSheetData("EFFECTS"),
+    getSheetData("ABILITY_TRIGGERS"),
     getSheetData("MOVES"),
     getSheetData("MOVE_EFFECTS"),
     getSheetData("ARCHETYPES"),
@@ -26,11 +27,20 @@ async function buildEnriched(filterDiscord?: string): Promise<CharacterSheetData
     effectsMap.get(id)!.push(row);
   });
 
-  // ability map: abilityId -> ability row + effects
+  // ability triggers map: abilityId -> trigger rows
+  const triggersMap = new Map<string, SheetRow[]>();
+  triggerSheet.rows.forEach((row) => {
+    const id = colKey(row, "abilityid").toLowerCase();
+    if (!id) return;
+    if (!triggersMap.has(id)) triggersMap.set(id, []);
+    triggersMap.get(id)!.push(row);
+  });
+
+  // ability map: abilityId -> ability row + effects + triggers
   const abilityMap = new Map<string, EnrichedAbility>();
   abilitySheet.rows.forEach((row) => {
     const id = colKey(row, "id").toLowerCase();
-    if (id) abilityMap.set(id, { ...row, effects: effectsMap.get(id) ?? [] } as EnrichedAbility);
+    if (id) abilityMap.set(id, { ...row, effects: effectsMap.get(id) ?? [], triggers: triggersMap.get(id) ?? [] } as EnrichedAbility);
   });
 
   // move effects map: moveId -> effect rows

@@ -3,7 +3,7 @@ import { useApi, request } from "../hooks/useApi.js";
 import AbilityForm from "../components/AbilityForm.js";
 import {
   type AbilityData,
-  TRIGGER_EVENT_LABELS, EFFECT_VALUE_LABELS, EFFECT_CATEGORY_STYLE,
+  EFFECT_VALUE_LABELS, EFFECT_CATEGORY_STYLE,
   formatTrigger, formatEffectCondition,
 } from "@nul/shared";
 import type { ApiResponse, AbilityRequest } from "@nul/shared";
@@ -24,9 +24,9 @@ export default function Abilities() {
   function toRequest(v: AbilityData): AbilityRequest {
     return {
       id: v.id, name: v.name, entry: v.entry,
-      triggerEvent: v.triggerEvent, triggerSubject: v.triggerSubject,
-      triggerParam: v.triggerParam, effectDice: v.effectDice,
-      effectCondition: v.effectCondition, effects: v.effects,
+      triggers: v.triggers,
+      effectDice: v.effectDice, effectCondition: v.effectCondition,
+      effects: v.effects,
     };
   }
 
@@ -90,9 +90,6 @@ export default function Abilities() {
         ) : (
           <div style={s.grid}>
             {abilities.map((ab) => {
-              const triggerLabel = ab.triggerEvent
-                ? formatTrigger(ab)
-                : "—";
               const rollLabel = formatEffectCondition(ab);
               return (
                 <div key={ab.id} style={s.card} onClick={() => { setSaveError(null); setEditing(ab); }}>
@@ -108,8 +105,12 @@ export default function Abilities() {
                     </button>
                   </div>
 
-                  {triggerLabel !== "—" && (
-                    <p style={s.triggerText}>⚡ {triggerLabel}</p>
+                  {(ab.triggers ?? []).length > 0 && (
+                    <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+                      {(ab.triggers ?? []).map((tr, i) => (
+                        <p key={i} style={s.triggerText}>⚡ {formatTrigger(tr)}</p>
+                      ))}
+                    </div>
                   )}
 
                   {rollLabel && (

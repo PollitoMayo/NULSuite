@@ -2,6 +2,8 @@ import { parseCondition } from "./condition.js";
 
 export enum TriggerEvent {
   PASSIVE      = "PASSIVE",
+  ON_STATUS    = "ON_STATUS",
+  ON_SPECIFIC_STATUS = "ON_SPECIFIC_STATUS",
   START_BATTLE = "START_BATTLE",
   ON_DEATH     = "ON_DEATH",
   DMG_ATK      = "DMG_ATK",
@@ -23,6 +25,7 @@ export enum EffectCategory {
   BUFF_DEBUFF  = "BUFF_DEBUFF",
   CONDITION    = "CONDITION",
   FIELD_STATUS = "FIELD_STATUS",
+  CURE         = "CURE",
 }
 
 export enum StatusEffect {
@@ -65,7 +68,20 @@ export enum FieldStatus {
   HEAL_BLOCK       = "HEAL_BLOCK",
 }
 
-export type AnyEffect = StatusEffect | BuffDebuff | ConditionEffect | FieldStatus;
+export enum CureEffect {
+  ALL_STATUS       = "CURE_ALL_STATUS",
+  CURE_POISON      = "CURE_POISON",
+  CURE_FREEZE      = "CURE_FREEZE",
+  CURE_BURN        = "CURE_BURN",
+  CURE_SLEEP       = "CURE_SLEEP",
+  ALL_CONDITIONS   = "CURE_ALL_CONDITIONS",
+  CURE_INFATUATED  = "CURE_INFATUATED",
+  CURE_CONFUSED    = "CURE_CONFUSED",
+  CURE_CURSED      = "CURE_CURSED",
+  CURE_ALL         = "CURE_ALL",
+}
+
+export type AnyEffect = StatusEffect | BuffDebuff | ConditionEffect | FieldStatus | CureEffect;
 
 export const STAT_STAGE_MAX =  6;
 export const STAT_STAGE_MIN = -6;
@@ -76,13 +92,17 @@ export interface AbilityEffectData {
   value:    string;
 }
 
+export interface AbilityTriggerData {
+  event:   string;
+  subject: string;
+  param:   string;
+}
+
 export interface AbilityData {
   id:              string;
   name:            string;
   entry:           string;
-  triggerEvent:    string;
-  triggerSubject:  string;
-  triggerParam:    string;
+  triggers:        AbilityTriggerData[];
   effectDice:      string;
   effectCondition: string;
   effects:         AbilityEffectData[];
@@ -92,6 +112,8 @@ export interface AbilityData {
 
 export const TRIGGER_EVENT_LABELS: Record<string, string> = {
   [TriggerEvent.PASSIVE]:      "Pasiva",
+  [TriggerEvent.ON_STATUS]:    "Al tener un estado",
+  [TriggerEvent.ON_SPECIFIC_STATUS]: "Al tener un estado específico",
   [TriggerEvent.START_BATTLE]: "Al iniciar la batalla",
   [TriggerEvent.ON_DEATH]:     "Al ser derrotado",
   [TriggerEvent.DMG_ATK]:      "Recibe daño físico (ATK)",
@@ -137,6 +159,16 @@ export const EFFECT_VALUE_LABELS: Record<string, string> = {
   [FieldStatus.MISTY_TERRAIN]:       "Terreno de niebla",
   [FieldStatus.PSYCHIC_TERRAIN]:     "Terreno psíquico",
   [FieldStatus.HEAL_BLOCK]:          "Bloqueo de curación",
+  [CureEffect.ALL_STATUS]:           "Cura todos los estados",
+  [CureEffect.CURE_POISON]:          "Cura Envenenamiento",
+  [CureEffect.CURE_FREEZE]:          "Cura Congelación",
+  [CureEffect.CURE_BURN]:            "Cura Quemadura",
+  [CureEffect.CURE_SLEEP]:           "Cura Sueño",
+  [CureEffect.ALL_CONDITIONS]:       "Cura todas las condiciones",
+  [CureEffect.CURE_INFATUATED]:      "Cura Enamoramiento",
+  [CureEffect.CURE_CONFUSED]:        "Cura Confusión",
+  [CureEffect.CURE_CURSED]:          "Cura Maldición",
+  [CureEffect.CURE_ALL]:             "Cura todo",
 };
 
 export const EFFECTS_BY_CATEGORY: Record<string, string[]> = {
@@ -144,6 +176,7 @@ export const EFFECTS_BY_CATEGORY: Record<string, string[]> = {
   [EffectCategory.BUFF_DEBUFF]:  Object.values(BuffDebuff),
   [EffectCategory.CONDITION]:    Object.values(ConditionEffect),
   [EffectCategory.FIELD_STATUS]: Object.values(FieldStatus),
+  [EffectCategory.CURE]:         Object.values(CureEffect),
 };
 
 export const EFFECT_CATEGORY_STYLE: Record<string, { bg: string; color: string; border: string }> = {
@@ -151,9 +184,12 @@ export const EFFECT_CATEGORY_STYLE: Record<string, { bg: string; color: string; 
   [EffectCategory.BUFF_DEBUFF]:  { bg: "#1a2a3a", color: "#80b0f0", border: "#3a5a8a" },
   [EffectCategory.CONDITION]:    { bg: "#2a1a3a", color: "#c080f0", border: "#6a3a8a" },
   [EffectCategory.FIELD_STATUS]: { bg: "#1a2e20", color: "#70d490", border: "#2a6a40" },
+  [EffectCategory.CURE]:         { bg: "#1a2a2e", color: "#60d0e0", border: "#2a6a7a" },
 };
 
 export const TRIGGERS_WITH_SUBJECT = new Set<string>([
+  TriggerEvent.ON_STATUS,
+  TriggerEvent.ON_SPECIFIC_STATUS,
   TriggerEvent.DMG_ATK,
   TriggerEvent.DMG_SPATK,
   TriggerEvent.DMG_ANY,
@@ -167,6 +203,8 @@ type TriggerFn = (subject: string, param: string) => string;
 
 const TRIGGER_FORMAT: Record<string, TriggerFn> = {
   [TriggerEvent.PASSIVE]:      ()      => "Pasiva (siempre activa)",
+  [TriggerEvent.ON_STATUS]:    (s)     => `Cuando ${s} tiene un estado`,
+  [TriggerEvent.ON_SPECIFIC_STATUS]: (s, p) => `Cuando ${s} tiene ${p}`,
   [TriggerEvent.START_BATTLE]: ()      => "Al iniciar la batalla",
   [TriggerEvent.ON_DEATH]:     ()      => "Al ser derrotado",
   [TriggerEvent.DMG_ATK]:      (s)     => `Cuando ${s} recibe daño físico (ATK)`,
@@ -178,18 +216,21 @@ const TRIGGER_FORMAT: Record<string, TriggerFn> = {
   [TriggerEvent.AFTER_ATTACK]: (s)     => `Después de que ${s} ataca`,
 };
 
-export function formatTrigger(ability: AbilityData): string {
-  const event = ability.triggerEvent?.toUpperCase() ?? "";
+export function formatTrigger(trigger: AbilityTriggerData): string {
+  const event = trigger.event?.toUpperCase() ?? "";
   const fn = TRIGGER_FORMAT[event];
-  if (!fn) return ability.triggerEvent ?? "";
-  const who = SUBJECT_LABELS[ability.triggerSubject?.toUpperCase()] ?? ability.triggerSubject ?? "uno mismo";
-  return fn(who, ability.triggerParam ?? "");
+  if (!fn) return trigger.event ?? "";
+  const who = SUBJECT_LABELS[trigger.subject?.toUpperCase()] ?? trigger.subject ?? "uno mismo";
+  return fn(who, trigger.param ?? "");
 }
 
 export function formatEffect(effect: AbilityEffectData): string {
   const what = EFFECT_VALUE_LABELS[effect.value?.toUpperCase()] ?? effect.value ?? "?";
-  if (effect.category?.toUpperCase() === EffectCategory.FIELD_STATUS) {
-    return `Activa ${what}`;
+  const cat = effect.category?.toUpperCase();
+  if (cat === EffectCategory.FIELD_STATUS) return `Activa ${what}`;
+  if (cat === EffectCategory.CURE) {
+    const who = SUBJECT_LABELS[effect.subject?.toUpperCase()] ?? effect.subject ?? "?";
+    return `${who} - ${what}`;
   }
   const who = SUBJECT_LABELS[effect.subject?.toUpperCase()] ?? effect.subject ?? "?";
   return `${who} - ${what}`;
@@ -213,16 +254,19 @@ function rv(row: Record<string, unknown>, key: string): string {
 }
 
 export function parseAbilityData(
-  row:        Record<string, unknown>,
-  effectRows: Record<string, unknown>[]
+  row:          Record<string, unknown>,
+  effectRows:   Record<string, unknown>[],
+  triggerRows:  Record<string, unknown>[] = [],
 ): AbilityData {
   return {
     id:              rv(row, "id"),
     name:            rv(row, "name"),
     entry:           rv(row, "entry"),
-    triggerEvent:    rv(row, "triggerevent"),
-    triggerSubject:  rv(row, "triggersubject"),
-    triggerParam:    rv(row, "triggerparam"),
+    triggers: triggerRows.map(tr => ({
+      event:   rv(tr, "triggerevent"),
+      subject: rv(tr, "triggersubject"),
+      param:   rv(tr, "triggerparam"),
+    })),
     effectDice:      rv(row, "effectdice"),
     effectCondition: rv(row, "effectcondition"),
     effects: effectRows.map(er => ({
