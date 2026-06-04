@@ -1,24 +1,27 @@
 services:
   server:
-    build:
-      context: .
-      dockerfile: packages/server/Dockerfile
-    container_name: nul-server
+    image: ghcr.io/pollitomayo/nul-server:latest
     restart: unless-stopped
     ports:
-      - "3000:3000"
-    env_file: packages/server/.env.prod
+      - "${SERVER_PORT:-3000}:3000"
+    environment:
+      PORT: 3000
+      HOST: 0.0.0.0
+      NODE_ENV: production
+      JWT_SECRET: ${JWT_SECRET}
+      GOOGLE_SPREADSHEET_ID: ${GOOGLE_SPREADSHEET_ID}
+      GOOGLE_SERVICE_ACCOUNT_EMAIL: ${GOOGLE_SERVICE_ACCOUNT_EMAIL}
+      GOOGLE_PRIVATE_KEY: ${GOOGLE_PRIVATE_KEY}
+      SENTRY_DSN: ${SENTRY_DSN:-}
 
   bot:
-    build:
-      context: .
-      dockerfile: packages/bot/Dockerfile
-    container_name: nul-bot
+    image: ghcr.io/pollitomayo/nul-bot:latest
     restart: unless-stopped
-    env_file: packages/bot/.env.prod
     depends_on:
       - server
-
-networks:
-  default:
-    name: nul-network
+    environment:
+      NODE_ENV: production
+      DISCORD_TOKEN: ${DISCORD_TOKEN}
+      CLIENT_ID: ${CLIENT_ID}
+      SERVER_URL: http://server:3000
+      SENTRY_DSN: ${SENTRY_DSN:-}

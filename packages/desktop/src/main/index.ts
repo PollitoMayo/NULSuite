@@ -1,7 +1,8 @@
 import * as Sentry from "@sentry/electron/main";
-import { app, BrowserWindow, shell } from "electron";
+import { app, BrowserWindow, ipcMain, shell } from "electron";
 import { join } from "path";
 import { is } from "@electron-toolkit/utils";
+import { autoUpdater } from "electron-updater";
 
 Sentry.init({
   dsn: process.env.SENTRY_DSN,
@@ -42,11 +43,32 @@ function createWindow(icon: string): void {
   }
 }
 
+function setupAutoUpdater() {
+  autoUpdater.autoDownload = false;
+
+  autoUpdater.on("update-available", (info) => {
+    mainWindow?.webContents.send("update-available", info.version);
+  });
+
+  autoUpdater.on("update-downloaded", () => {
+    mainWindow?.webContents.send("update-downloaded");
+  });
+
+  ipcMain.handle("download-update", () => autoUpdater.downloadUpdate());
+  ipcMain.handle("install-update",  () => autoUpdater.quitAndInstall());
+
+  // Check after window is ready to avoid slowing down startup
+  app.once("browser-window-show", () => {
+    if (!is.dev) autoUpdater.checkForUpdates();
+  });
+}
+
 app.whenReady().then(() => {
   const iconPng = join(app.getAppPath(), "resources/icon.png");
   if (process.platform === "darwin") {
     app.dock.setIcon(iconPng);
   }
+  setupAutoUpdater();
   createWindow(iconPng);
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow(iconPng);

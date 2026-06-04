@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Login from "./pages/Login.js";
 import Users, { User } from "./pages/Users.js";
 import Characters from "./pages/Characters.js";
@@ -24,8 +24,15 @@ const NAV = [
 ] as const;
 
 export default function App() {
-  const [authed, setAuthed] = useState(!!getToken());
-  const [view, setView]     = useState<View>({ page: "users" });
+  const [authed, setAuthed]           = useState(!!getToken());
+  const [view, setView]               = useState<View>({ page: "users" });
+  const [updateVersion, setUpdateVersion] = useState<string | null>(null);
+  const [updateReady, setUpdateReady]     = useState(false);
+
+  useEffect(() => {
+    window.api.onUpdateAvailable((v) => setUpdateVersion(v));
+    window.api.onUpdateDownloaded(() => setUpdateReady(true));
+  }, []);
 
   if (!authed) return <Login onLogin={() => setAuthed(true)} />;
 
@@ -49,6 +56,25 @@ export default function App() {
   }
 
   return (
+    <div style={{ display: "flex", flexDirection: "column", height: "100vh" }}>
+      {updateVersion && !updateReady && (
+        <div style={s.updateBanner}>
+          <span>Nueva versión disponible: <strong>v{updateVersion}</strong></span>
+          <button style={s.updateBtn} onClick={() => window.api.downloadUpdate()}>
+            Descargar
+          </button>
+          <button style={s.dismissBtn} onClick={() => setUpdateVersion(null)}>✕</button>
+        </div>
+      )}
+      {updateReady && (
+        <div style={{ ...s.updateBanner, background: "#1a3a1a", borderColor: "var(--success)" }}>
+          <span>Actualización lista para instalar</span>
+          <button style={{ ...s.updateBtn, background: "var(--success)" }}
+            onClick={() => window.api.installUpdate()}>
+            Reiniciar e instalar
+          </button>
+        </div>
+      )}
     <div className="app-shell">
       {/* Sidebar */}
       <nav className="sidebar">
@@ -80,5 +106,23 @@ export default function App() {
         {renderContent()}
       </main>
     </div>
+    </div>
   );
 }
+
+const s: Record<string, React.CSSProperties> = {
+  updateBanner: {
+    display: "flex", alignItems: "center", gap: 12,
+    padding: "8px 20px", fontSize: 13,
+    background: "#1a1a3a", borderBottom: "1px solid var(--accent)",
+    flexShrink: 0,
+  },
+  updateBtn: {
+    marginLeft: "auto", fontSize: 12, padding: "4px 14px",
+    background: "var(--accent)",
+  },
+  dismissBtn: {
+    background: "transparent", border: "none", color: "var(--text-muted)",
+    padding: "4px 6px", fontSize: 13,
+  },
+};

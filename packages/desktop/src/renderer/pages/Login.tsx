@@ -1,5 +1,5 @@
 import { useState, FormEvent } from "react";
-import { request, setToken } from "../hooks/useApi.js";
+import { request, setToken, getServerUrl, setServerUrl } from "../hooks/useApi.js";
 import type { LoginResponse } from "@nul/shared";
 
 interface Props {
@@ -7,6 +7,7 @@ interface Props {
 }
 
 export default function Login({ onLogin }: Props) {
+  const [serverUrl, setServerUrlState] = useState(getServerUrl);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -17,6 +18,7 @@ export default function Login({ onLogin }: Props) {
     setLoading(true);
     setError(null);
     try {
+      setServerUrl(serverUrl);
       const res = await request<LoginResponse>("/auth/login", {
         method: "POST",
         body: JSON.stringify({ username, password }),
@@ -39,6 +41,14 @@ export default function Login({ onLogin }: Props) {
       <form onSubmit={handleSubmit} style={styles.card}>
         <h1 style={styles.title}>NUL Admin</h1>
         {error && <p style={styles.error}>{error}</p>}
+        <input
+          style={{ width: "100%", marginBottom: 12 }}
+          type="url"
+          placeholder="URL del servidor (ej: http://192.168.1.10:3000)"
+          value={serverUrl}
+          onChange={(e) => setServerUrlState(e.target.value)}
+          required
+        />
         <input
           style={{ width: "100%", marginBottom: 12 }}
           type="text"

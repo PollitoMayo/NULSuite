@@ -1,8 +1,8 @@
-**/node_modules
-**/dist
-**/.env
-**/.env.*
-*.md
 .git
-.gitignore
+.github
+node_modules
+*/node_modules
+*/dist
 packages/desktop
+*.md
+.env*
