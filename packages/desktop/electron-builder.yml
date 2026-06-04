@@ -5,6 +5,7 @@ publish:
   releaseType: release
 directories:
   buildResources: resources
+  output: release
 files:
   - "!**/.vscode/*"
   - "!src/*"
