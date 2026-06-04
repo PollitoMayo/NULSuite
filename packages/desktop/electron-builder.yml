@@ -11,12 +11,15 @@ files:
 asarUnpack:
   - resources/**
 mac:
+  icon: resources/icon.icns
   entitlementsInherit: resources/entitlements.mac.plist
   extendInfo:
     NSCameraUsageDescription: Application requests access to the device's camera.
 win:
+  icon: resources/icon.png
   executableName: nul-admin
 linux:
+  icon: resources/icon.png
   target:
     - AppImage
     - snap

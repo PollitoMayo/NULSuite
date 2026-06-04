@@ -52,11 +52,23 @@ export default async function archetypesRoutes(app: FastifyInstance) {
   app.delete<{ Params: { id: string } }>("/archetypes/:id", auth, async (req, reply) => {
     const { id } = req.params;
 
-    const sheet = await getSheetData(ARCHETYPES);
+    const [sheet, charSheet] = await Promise.all([
+      getSheetData(ARCHETYPES),
+      getSheetData("CHARACTERS"),
+    ]);
+
     const idx = sheet.rows.findIndex(
       (r) => colKey(r as Record<string, unknown>, "id").toLowerCase() === id.toLowerCase()
     );
     if (idx === -1) return reply.code(404).send({ success: false, error: "Archetype not found" });
+
+    const archetypeName = colKey(sheet.rows[idx] as Record<string, unknown>, "name").toLowerCase();
+    const usedBy = charSheet.rows
+      .filter((r) => colKey(r as Record<string, unknown>, "archetype").toLowerCase() === archetypeName)
+      .map((r) => colKey(r as Record<string, unknown>, "name"))
+      .filter(Boolean);
+    if (usedBy.length > 0)
+      return reply.code(409).send({ success: false, error: `En uso por: ${usedBy.join(", ")}` });
 
     await deleteRow(ARCHETYPES, idx);
     return reply.send({ success: true } satisfies ApiResponse<void>);

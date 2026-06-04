@@ -89,15 +89,24 @@ export default async function movesRoutes(app: FastifyInstance) {
   app.delete<{ Params: { id: string } }>("/moves/:id", auth, async (req, reply) => {
     const { id } = req.params;
 
-    const [moveSheet, effectSheet] = await Promise.all([
+    const [moveSheet, effectSheet, charSheet] = await Promise.all([
       getSheetData(MOVES),
       getSheetData(MOVE_EFFECTS),
+      getSheetData("CHARACTERS"),
     ]);
 
     const moveIdx = moveSheet.rows.findIndex(
       (r) => colKey(r as Record<string, unknown>, "id").toLowerCase() === id.toLowerCase()
     );
     if (moveIdx === -1) return reply.code(404).send({ success: false, error: "Move not found" });
+
+    const usedBy = charSheet.rows
+      .filter((r) => colKey(r as Record<string, unknown>, "moveset")
+        .split(",").map((m) => m.trim().toLowerCase()).includes(id.toLowerCase()))
+      .map((r) => colKey(r as Record<string, unknown>, "name"))
+      .filter(Boolean);
+    if (usedBy.length > 0)
+      return reply.code(409).send({ success: false, error: `En uso por: ${usedBy.join(", ")}` });
 
     const effectIndices = effectSheet.rows.reduce<number[]>((acc, r, i) => {
       if (colKey(r as Record<string, unknown>, "moveid").toLowerCase() === id.toLowerCase()) acc.push(i);

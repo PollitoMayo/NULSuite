@@ -4,7 +4,7 @@ import { is } from "@electron-toolkit/utils";
 
 let mainWindow: BrowserWindow | null = null;
 
-function createWindow(): void {
+function createWindow(icon: string): void {
   mainWindow = new BrowserWindow({
     width: 1280,
     height: 800,
@@ -12,6 +12,7 @@ function createWindow(): void {
     minHeight: 600,
     show: false,
     autoHideMenuBar: true,
+    icon,
     webPreferences: {
       preload: join(__dirname, "../preload/index.js"),
       sandbox: false,
@@ -37,9 +38,13 @@ function createWindow(): void {
 }
 
 app.whenReady().then(() => {
-  createWindow();
+  const iconPng = join(app.getAppPath(), "resources/icon.png");
+  if (process.platform === "darwin") {
+    app.dock.setIcon(iconPng);
+  }
+  createWindow(iconPng);
   app.on("activate", () => {
-    if (BrowserWindow.getAllWindows().length === 0) createWindow();
+    if (BrowserWindow.getAllWindows().length === 0) createWindow(iconPng);
   });
 });
 

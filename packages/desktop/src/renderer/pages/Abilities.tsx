@@ -57,6 +57,7 @@ export default function Abilities() {
     if (!window.confirm(`¿Eliminar "${ability.name}"? También se eliminarán sus efectos.`)) return;
     const res = await request<void>(`/abilities/${encodeURIComponent(ability.id)}`, { method: "DELETE" });
     if (res.success) refresh();
+    else alert(res.error ?? "Error al eliminar");
   }
 
   const subtitle = loading ? "Cargando…" : `${abilities.length} habilidad${abilities.length !== 1 ? "es" : ""}`;

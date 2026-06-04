@@ -116,16 +116,24 @@ export default async function abilitiesRoutes(app: FastifyInstance) {
   app.delete<{ Params: { id: string } }>("/abilities/:id", auth, async (req, reply) => {
     const { id } = req.params;
 
-    const [abilitySheet, effectSheet, triggerSheet] = await Promise.all([
+    const [abilitySheet, effectSheet, triggerSheet, charSheet] = await Promise.all([
       getSheetData(ABILITIES),
       getSheetData(EFFECTS),
       getSheetData(TRIGGERS),
+      getSheetData("CHARACTERS"),
     ]);
 
     const abilityIdx = abilitySheet.rows.findIndex(
       (r) => colKey(r as Record<string, unknown>, "id").toLowerCase() === id.toLowerCase()
     );
     if (abilityIdx === -1) return reply.code(404).send({ success: false, error: "Ability not found" });
+
+    const usedBy = charSheet.rows
+      .filter((r) => colKey(r as Record<string, unknown>, "ability").toLowerCase() === id.toLowerCase())
+      .map((r) => colKey(r as Record<string, unknown>, "name"))
+      .filter(Boolean);
+    if (usedBy.length > 0)
+      return reply.code(409).send({ success: false, error: `En uso por: ${usedBy.join(", ")}` });
 
     const effectIndices = effectSheet.rows.reduce<number[]>((acc, r, i) => {
       if (colKey(r as Record<string, unknown>, "abilityid").toLowerCase() === id.toLowerCase()) acc.push(i);
