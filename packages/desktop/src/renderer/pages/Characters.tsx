@@ -7,19 +7,24 @@ import {
   parseAbilityData, formatTrigger, formatEffect, formatEffectCondition, EFFECT_CATEGORY_STYLE,
   parseMoveData, formatHitRoll, formatDamageRoll, formatMoveEffectCondition, formatMoveEffect,
   MOVE_CATEGORY_STYLE,
-  type AbilityData, type MoveData,
+  parseArchetypeData,
+  type AbilityData, type MoveData, type ArchetypeData,
 } from "@nul/shared";
 
 const SHEET = "CHARACTERS";
 
 interface Character extends CharacterValues {
-  rowIndex:    number;
-  abilityData: AbilityData | null;
-  moveDataList: (MoveData | null)[];
+  rowIndex:      number;
+  abilityData:   AbilityData | null;
+  moveDataList:  (MoveData | null)[];
+  archetypeData: ArchetypeData | null;
 }
 
 const SUPER_COLORS: Record<string, string> = {
   "Héroe":"#5865f2", "Villano":"#ed4245", "Ciudadano":"#8e9297",
+};
+const SUPER_EMOJI: Record<string, string> = {
+  "Héroe": "🦸", "Villano": "🦹", "Ciudadano": "🕵️", "Vigilante": "🥷",
 };
 const ARCH_COLORS: Record<string, string> = {
   Defense:"#3ba55c", Offense:"#ed4245", Support:"#faa61a",
@@ -50,6 +55,13 @@ function extractAbility(row: CharacterSheetData["rows"][number]): AbilityData | 
   return parseAbilityData(enriched as Record<string, unknown>, (enriched.effects ?? []) as Record<string, unknown>[]);
 }
 
+function extractArchetype(row: CharacterSheetData["rows"][number]): ArchetypeData | null {
+  const found = Object.keys(row).find((k) => k.toLowerCase() === "archetype");
+  const val = found ? row[found] : null;
+  if (!val || typeof val !== "object" || Array.isArray(val)) return null;
+  return parseArchetypeData(val as Record<string, unknown>);
+}
+
 function extractMoves(row: CharacterSheetData["rows"][number]): (MoveData | null)[] {
   const found = Object.keys(row).find((k) => k.toLowerCase() === "moves");
   const val = found ? row[found] : null;
@@ -63,8 +75,9 @@ function parseChars(data: CharacterSheetData): Character[] {
   return data.rows.map((row, i) => {
     const movesetStr  = col(row, "moveset");
     const moveNames   = movesetStr.split(",").map((m) => m.trim()).filter(Boolean);
-    const abilityData = extractAbility(row);
-    const moveDataList = extractMoves(row);
+    const abilityData   = extractAbility(row);
+    const moveDataList  = extractMoves(row);
+    const archetypeData = extractArchetype(row);
     // pad with nulls so we always have 4 slots
     while (moveDataList.length < 4) moveDataList.push(null);
     return {
@@ -82,11 +95,12 @@ function parseChars(data: CharacterSheetData): Character[] {
       ability:     abilityData?.id ?? col(row, "ability"),
       abilityData,
       moveDataList,
+      archetypeData,
       move1:       moveNames[0] ?? "",
       move2:       moveNames[1] ?? "",
       move3:       moveNames[2] ?? "",
       move4:       moveNames[3] ?? "",
-      archetype:   col(row, "archetype"),
+      archetype:   archetypeData?.name ?? col(row, "archetype"),
     };
   });
 }
@@ -189,8 +203,10 @@ export default function Characters({ userFilter, userLabel, onBack }: Props) {
                   <div style={s.cardHeader}>
                     <p style={s.charName}>{c.name}</p>
                     <div style={{ display: "flex", gap: 5, flexWrap: "wrap", justifyContent: "flex-end" }}>
-                      <span className="badge" style={{ background: superColor, color: "#fff" }}>{c.super}</span>
-                      <span className="badge" style={{ background: ARCH_COLORS[c.archetype] ?? "#555", color: "#fff" }}>{c.archetype}</span>
+                      <span className="badge" style={{ background: "transparent", color: superColor, border: `1px solid ${superColor}` }}>{SUPER_EMOJI[c.super] ? `${SUPER_EMOJI[c.super]} ` : ""}{c.super}</span>
+                      <span className="badge" style={{ background: "transparent", color: ARCH_COLORS[c.archetype] ?? "var(--text-muted)", border: `1px solid ${ARCH_COLORS[c.archetype] ?? "var(--border)"}` }}>
+                        {c.archetypeData?.emoji ? `${c.archetypeData.emoji} ` : ""}{c.archetype}
+                      </span>
                     </div>
                   </div>
 
@@ -198,6 +214,29 @@ export default function Characters({ userFilter, userLabel, onBack }: Props) {
                   {!userFilter && (
                     <p style={s.discord}>@{c.user}</p>
                   )}
+
+                  {/* Archetype stats */}
+                  {c.archetypeData && (() => {
+                    const a = c.archetypeData!;
+                    const stats = [
+                      { label: "HP",     value: a.hp },
+                      { label: "ATK",    value: a.atk },
+                      { label: "DEF",    value: a.def },
+                      { label: "SP.ATK", value: a.spAtk },
+                      { label: "SP.DEF", value: a.spDef },
+                      { label: "SPD",    value: a.spd },
+                    ];
+                    return (
+                      <div style={s.archetypeStats}>
+                        {stats.map(({ label, value }) => (
+                          <div key={label} style={s.archStatCell}>
+                            <p style={s.archStatLabel}>{label}</p>
+                            <p style={s.archStatValue}>{value || "—"}</p>
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  })()}
 
                   {/* Pokémon */}
                   <div style={s.pokemonRow}>
@@ -489,4 +528,15 @@ const s: Record<string, React.CSSProperties> = {
   abilityEntry: { fontSize: 12, color: "var(--text-muted)", lineHeight: 1.5 },
   chipRow:      { display: "flex", flexWrap: "wrap" as const, gap: 4, marginTop: 2 },
   effectChip:   { fontSize: 10, fontWeight: 700, padding: "3px 8px", borderRadius: 4 },
+  archetypeStats: {
+    display: "grid",
+    gridTemplateColumns: "repeat(6, 1fr)",
+    gap: 4,
+    background: "var(--bg)",
+    borderRadius: 8,
+    padding: "8px 10px",
+  },
+  archStatCell:  { display: "flex", flexDirection: "column" as const, alignItems: "center", gap: 2 },
+  archStatLabel: { fontSize: 9, fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase" as const, letterSpacing: "0.04em" },
+  archStatValue: { fontSize: 13, fontWeight: 700 },
 };

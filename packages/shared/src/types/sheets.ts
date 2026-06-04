@@ -16,7 +16,7 @@ export interface EnrichedAbility {
 export type EnrichedMove = EnrichedAbility;
 
 export type CharacterRow = {
-  [key: string]: string | number | boolean | null | EnrichedAbility | EnrichedMove[];
+  [key: string]: string | number | boolean | null | EnrichedAbility | EnrichedMove[] | SheetRow;
 };
 
 export interface CharacterSheetData {

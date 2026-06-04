@@ -8,12 +8,13 @@ function colKey(row: SheetRow, key: string): string {
 }
 
 async function buildEnriched(filterDiscord?: string): Promise<CharacterSheetData> {
-  const [charSheet, abilitySheet, effectSheet, moveSheet, moveEffectSheet] = await Promise.all([
+  const [charSheet, abilitySheet, effectSheet, moveSheet, moveEffectSheet, archetypeSheet] = await Promise.all([
     getSheetData("CHARACTERS"),
     getSheetData("ABILITIES"),
     getSheetData("EFFECTS"),
     getSheetData("MOVES"),
     getSheetData("MOVE_EFFECTS"),
+    getSheetData("ARCHETYPES"),
   ]);
 
   // ability effects map: abilityId -> effect rows
@@ -48,15 +49,28 @@ async function buildEnriched(filterDiscord?: string): Promise<CharacterSheetData
     if (id) moveMap.set(id, { ...row, effects: moveEffectsMap.get(id) ?? [] } as EnrichedMove);
   });
 
+  // archetype map: name -> raw row
+  const archetypeMap = new Map<string, SheetRow>();
+  archetypeSheet.rows.forEach((row) => {
+    const name = colKey(row, "name").toLowerCase();
+    if (name) archetypeMap.set(name, row);
+  });
+
   const sourceRows = filterDiscord
     ? charSheet.rows.filter((r) => colKey(r, "discord").toLowerCase() === filterDiscord.toLowerCase())
     : charSheet.rows;
 
   const rows = sourceRows.map((row) => {
-    const abilityId = colKey(row, "ability").toLowerCase();
-    const moveIds   = colKey(row, "moveset").split(",").map((m) => m.trim().toLowerCase()).filter(Boolean);
-    const moves     = moveIds.map((id) => moveMap.get(id) ?? null).filter(Boolean) as EnrichedMove[];
-    return { ...row, Ability: abilityMap.get(abilityId) ?? null, Moves: moves };
+    const abilityId    = colKey(row, "ability").toLowerCase();
+    const archetypeName = colKey(row, "archetype").toLowerCase();
+    const moveIds      = colKey(row, "moveset").split(",").map((m) => m.trim().toLowerCase()).filter(Boolean);
+    const moves        = moveIds.map((id) => moveMap.get(id) ?? null).filter(Boolean) as EnrichedMove[];
+    return {
+      ...row,
+      Ability:   abilityMap.get(abilityId) ?? null,
+      Moves:     moves,
+      Archetype: archetypeMap.get(archetypeName) ?? null,
+    };
   });
 
   return { sheetName: "CHARACTERS", headers: charSheet.headers, rows };
