@@ -12,7 +12,7 @@ services:
       GOOGLE_SPREADSHEET_ID: ${GOOGLE_SPREADSHEET_ID}
       GOOGLE_SERVICE_ACCOUNT_EMAIL: ${GOOGLE_SERVICE_ACCOUNT_EMAIL}
       GOOGLE_PRIVATE_KEY: ${GOOGLE_PRIVATE_KEY}
-      SENTRY_DSN: ${SENTRY_DSN:-}
+      SENTRY_DSN: ${SERVER_SENTRY_DSN}
 
   bot:
     image: ghcr.io/pollitomayo/nul-bot:latest
@@ -23,5 +23,6 @@ services:
       NODE_ENV: production
       DISCORD_TOKEN: ${DISCORD_TOKEN}
       CLIENT_ID: ${CLIENT_ID}
+      GUILD_ID: ${GUILD_ID}
       SERVER_URL: http://server:3000
-      SENTRY_DSN: ${SENTRY_DSN:-}
+      SENTRY_DSN: ${BOT_SENTRY_DSN}
