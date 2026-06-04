@@ -69,7 +69,7 @@ export async function deleteRow(sheetName: string, rowIndex: number): Promise<vo
   const sheets = getClient();
   const meta = await sheets.spreadsheets.get({ spreadsheetId: spreadsheetId() });
   const sheet = meta.data.sheets?.find(
-    (s) => s.properties?.title === sheetName
+    (s) => s.properties?.title?.toLowerCase() === sheetName.toLowerCase()
   );
   if (!sheet?.properties?.sheetId) throw new Error(`Sheet "${sheetName}" not found`);
 
@@ -108,7 +108,7 @@ export async function deleteRows(sheetName: string, rowIndices: number[]): Promi
   if (rowIndices.length === 0) return;
   const sheets = getClient();
   const meta = await sheets.spreadsheets.get({ spreadsheetId: spreadsheetId() });
-  const sheet = meta.data.sheets?.find((s) => s.properties?.title === sheetName);
+  const sheet = meta.data.sheets?.find((s) => s.properties?.title?.toLowerCase() === sheetName.toLowerCase());
   if (!sheet?.properties?.sheetId) throw new Error(`Sheet "${sheetName}" not found`);
 
   // Delete highest indices first so earlier deletions don't shift later targets

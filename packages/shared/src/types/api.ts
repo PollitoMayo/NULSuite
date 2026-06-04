@@ -59,6 +59,19 @@ export interface MoveRequest {
   effects:         MoveEffectRequest[];
 }
 
+export interface ArchetypeRequest {
+  id:       string;
+  isPublic: boolean;
+  name:     string;
+  emoji:    string;
+  hp:       string;
+  atk:      string;
+  def:      string;
+  spAtk:    string;
+  spDef:    string;
+  spd:      string;
+}
+
 export interface BotStatus {
   online: boolean;
   tag: string | null;

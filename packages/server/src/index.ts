@@ -5,7 +5,8 @@ import authRoutes from "./routes/auth.js";
 import sheetsRoutes from "./routes/sheets.js";
 import charactersRoutes from "./routes/characters.js";
 import abilitiesRoutes from "./routes/abilities.js";
-import movesRoutes     from "./routes/moves.js";
+import movesRoutes      from "./routes/moves.js";
+import archetypesRoutes from "./routes/archetypes.js";
 
 (async () => {
   const app = Fastify({ logger: true });
@@ -17,7 +18,8 @@ import movesRoutes     from "./routes/moves.js";
   await app.register(sheetsRoutes, { prefix: "/api" });
   await app.register(charactersRoutes, { prefix: "/api" });
   await app.register(abilitiesRoutes,  { prefix: "/api" });
-  await app.register(movesRoutes,      { prefix: "/api" });
+  await app.register(movesRoutes,       { prefix: "/api" });
+  await app.register(archetypesRoutes,  { prefix: "/api" });
 
   app.get("/health", async () => ({ ok: true }));
 

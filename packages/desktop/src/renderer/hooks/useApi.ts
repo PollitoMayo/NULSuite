@@ -23,7 +23,7 @@ async function request<T>(
   const res = await fetch(`${SERVER_URL}/api${path}`, {
     ...options,
     headers: {
-      "Content-Type": "application/json",
+      ...(options.body != null ? { "Content-Type": "application/json" } : {}),
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...options.headers,
     },

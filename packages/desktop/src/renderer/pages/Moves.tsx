@@ -13,7 +13,7 @@ function toRequest(m: MoveData): MoveRequest {
   return {
     id: m.id, name: m.name, entry: m.entry,
     type: m.type, category: m.category,
-    hitDice: m.hitDice, hitCondition: m.hitCondition,
+    hitDice: m.hitDice, hitStat: m.hitStat, hitCondition: m.hitCondition,
     damageDice: m.damageDice, damageStat: m.damageStat,
     effectDice: m.effectDice, effectCondition: m.effectCondition,
     effects: m.effects.map((e) => ({ subject: e.subject, category: e.category, value: e.value })),

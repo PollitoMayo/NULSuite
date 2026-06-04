@@ -4,6 +4,7 @@ import Users, { User } from "./pages/Users.js";
 import Characters from "./pages/Characters.js";
 import Abilities from "./pages/Abilities.js";
 import Moves from "./pages/Moves.js";
+import Archetypes from "./pages/Archetypes.js";
 import { getToken, clearToken } from "./hooks/useApi.js";
 
 type View =
@@ -11,6 +12,7 @@ type View =
   | { page: "characters" }
   | { page: "abilities" }
   | { page: "moves" }
+  | { page: "archetypes" }
   | { page: "user-characters"; user: User };
 
 const NAV = [
@@ -18,6 +20,7 @@ const NAV = [
   { id: "characters", label: "Personajes",  icon: "⚔️" },
   { id: "abilities",  label: "Habilidades", icon: "⚡" },
   { id: "moves",      label: "Movimientos", icon: "🥊" },
+  { id: "archetypes", label: "Arquetipos",  icon: "🛡️" },
 ] as const;
 
 export default function App() {
@@ -32,6 +35,7 @@ export default function App() {
     if (view.page === "characters") return <Characters />;
     if (view.page === "abilities")  return <Abilities />;
     if (view.page === "moves")      return <Moves />;
+    if (view.page === "archetypes") return <Archetypes />;
     if (view.page === "user-characters") {
       return (
         <Characters
