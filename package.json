@@ -1,11 +1,6 @@
 {
   "name": "nul-suite",
   "private": true,
-  "pnpm": {
-    "overrides": {
-      "esbuild": "0.25.12"
-    }
-  },
   "scripts": {
     "dev:bot": "pnpm --filter @nul/bot dev",
     "dev:server": "pnpm --filter @nul/server dev",
