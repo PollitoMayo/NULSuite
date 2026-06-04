@@ -3,7 +3,7 @@ import { useApi, request } from "../hooks/useApi.js";
 import MoveForm from "../components/MoveForm.js";
 import {
   PokemonType,
-  MoveCategory, MOVE_CATEGORY_STYLE, EFFECT_CATEGORY_STYLE,
+  MoveCategory, MOVE_CATEGORY_STYLE, MOVE_CATEGORY_ICON, MOVE_CATEGORY_LABELS, EFFECT_CATEGORY_STYLE,
   formatHitRoll, formatDamageRoll, formatMoveEffectCondition, formatMoveEffect,
   type MoveData,
 } from "@nul/shared";
@@ -115,9 +115,15 @@ export default function Moves() {
                         <img src={pt.symbolUrl} alt={pt.displayName} title={pt.displayName}
                           style={{ height: 22, objectFit: "contain" }} />
                       )}
-                      <span style={{ ...s.catBadge, background: catStyle.bg, color: catStyle.color, border: `1px solid ${catStyle.border}` }}>
-                        {mv.category === MoveCategory.PHYSICAL ? "Físico" : mv.category === MoveCategory.SPECIAL ? "Especial" : "Estado"}
-                      </span>
+                      {MOVE_CATEGORY_ICON[mv.category] ? (
+                        <img src={MOVE_CATEGORY_ICON[mv.category]} alt={MOVE_CATEGORY_LABELS[mv.category] ?? mv.category}
+                          title={MOVE_CATEGORY_LABELS[mv.category] ?? mv.category}
+                          style={{ height: 20, objectFit: "contain" }} />
+                      ) : (
+                        <span style={{ ...s.catBadge, background: catStyle.bg, color: catStyle.color, border: `1px solid ${catStyle.border}` }}>
+                          {mv.category}
+                        </span>
+                      )}
                     </div>
                   </div>
 

@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
 import { useApi, request } from "../hooks/useApi.js";
-import CharacterForm, { CharacterValues } from "../components/CharacterForm.js";
-import type { CharacterSheetData, EnrichedAbility, EnrichedMove, AppendRowRequest, UpdateRowRequest } from "@nul/shared";
+import CharacterForm, { CharacterValues, UserOption, PokemonEntry, AbilityOption, MoveOption } from "../components/CharacterForm.js";
+import type { CharacterSheetData, EnrichedAbility, EnrichedMove, AppendRowRequest, UpdateRowRequest, SheetData } from "@nul/shared";
 import {
   PokemonType,
   parseAbilityData, formatTrigger, formatEffect, formatEffectCondition, EFFECT_CATEGORY_STYLE,
   parseMoveData, formatHitRoll, formatDamageRoll, formatMoveEffectCondition, formatMoveEffect,
-  MOVE_CATEGORY_STYLE,
+  MOVE_CATEGORY_STYLE, MOVE_CATEGORY_ICON, MOVE_CATEGORY_LABELS,
   parseArchetypeData,
   type AbilityData, type MoveData, type ArchetypeData,
 } from "@nul/shared";
@@ -15,6 +15,7 @@ const SHEET = "CHARACTERS";
 
 interface Character extends CharacterValues {
   rowIndex:      number;
+  id:            string;
   abilityData:   AbilityData | null;
   moveDataList:  (MoveData | null)[];
   archetypeData: ArchetypeData | null;
@@ -71,6 +72,11 @@ function extractMoves(row: CharacterSheetData["rows"][number]): (MoveData | null
   );
 }
 
+function computeNextId(chars: Character[]): string {
+  const max = chars.reduce((m, c) => Math.max(m, parseInt(c.id, 10) || 0), 0);
+  return String(max + 1);
+}
+
 function parseChars(data: CharacterSheetData): Character[] {
   return data.rows.map((row, i) => {
     const movesetStr  = col(row, "moveset");
@@ -78,18 +84,21 @@ function parseChars(data: CharacterSheetData): Character[] {
     const abilityData   = extractAbility(row);
     const moveDataList  = extractMoves(row);
     const archetypeData = extractArchetype(row);
-    // pad with nulls so we always have 4 slots
     while (moveDataList.length < 4) moveDataList.push(null);
     return {
       rowIndex:    i,
+      id:          col(row, "id"),
+      isPublic:    col(row, "public") || "TRUE",
       user:        col(row, "discord"),
       name:        col(row, "name"),
+      superName:   col(row, "supername"),
       super:       col(row, "super"),
       age:         col(row, "age"),
       birthday:    col(row, "birthday"),
       gender:      col(row, "gender"),
       height:      col(row, "height"),
       pokemon:     col(row, "pokemon"),
+      pokemonId:   col(row, "pokemonid"),
       type1:       col(row, "type1"),
       type2:       col(row, "type2"),
       ability:     abilityData?.id ?? col(row, "ability"),
@@ -107,8 +116,8 @@ function parseChars(data: CharacterSheetData): Character[] {
 
 function toValues(v: CharacterValues): (string | number)[] {
   const moveset = [v.move1, v.move2, v.move3, v.move4].filter(Boolean).join(", ");
-  return [v.user, v.name, v.super, v.age, v.birthday, v.gender, v.height,
-          v.pokemon, v.type1, v.type2, v.ability, moveset, v.archetype];
+  return [v.isPublic, v.user, v.name, v.superName, v.super, v.age, v.birthday, v.gender, v.height,
+          v.pokemon, v.pokemonId, v.type1, v.type2, v.ability, moveset, v.archetype];
 }
 
 interface Props {
@@ -119,12 +128,33 @@ interface Props {
 
 export default function Characters({ userFilter, userLabel, onBack }: Props) {
   const { data, loading, error, call } = useApi<CharacterSheetData>();
+  const { data: usersData,      call: callUsers      } = useApi<SheetData>();
+  const { data: pokedexData,    call: callPokedex    } = useApi<PokemonEntry[]>();
+  const { data: abilitiesData,  call: callAbilities  } = useApi<AbilityData[]>();
+  const { data: movesData,      call: callMoves      } = useApi<MoveData[]>();
   const [showAdd, setShowAdd]     = useState(false);
   const [editing, setEditing]     = useState<Character | null>(null);
   const [saving, setSaving]       = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
 
   useEffect(() => { refresh(); }, [userFilter]);
+  useEffect(() => { callUsers("/sheets/USERS"); }, []);
+  useEffect(() => { callPokedex("/pokedex"); }, []);
+  useEffect(() => { callAbilities("/abilities"); }, []);
+  useEffect(() => { callMoves("/moves"); }, []);
+
+  const userOptions: UserOption[] = (usersData?.rows ?? []).map((row) => {
+    const get = (k: string) => { const f = Object.keys(row).find((x) => x.toLowerCase() === k); return String(f ? (row[f] ?? "") : ""); };
+    return { discord: get("discord"), username: get("username") };
+  }).filter((u) => u.discord);
+
+  const abilityOptions: AbilityOption[] = (abilitiesData ?? [])
+    .map((a) => ({ id: a.id, name: a.name }))
+    .filter((a) => a.id);
+
+  const moveOptions: MoveOption[] = (movesData ?? [])
+    .map((m) => ({ id: m.id, name: m.name }))
+    .filter((m) => m.id);
 
   const chars = data ? parseChars(data) : [];
 
@@ -135,9 +165,10 @@ export default function Characters({ userFilter, userLabel, onBack }: Props) {
 
   async function handleAdd(v: CharacterValues) {
     setSaving(true); setSaveError(null);
+    const nextId = computeNextId(chars);
     const res = await request<void>("/sheets/rows", {
       method: "POST",
-      body: JSON.stringify({ sheetName: SHEET, values: toValues(v) } satisfies AppendRowRequest),
+      body: JSON.stringify({ sheetName: SHEET, values: [nextId, ...toValues(v)] } satisfies AppendRowRequest),
     });
     setSaving(false);
     if (res.success) { setShowAdd(false); refresh(); }
@@ -149,11 +180,18 @@ export default function Characters({ userFilter, userLabel, onBack }: Props) {
     setSaving(true); setSaveError(null);
     const res = await request<void>("/sheets/rows", {
       method: "PUT",
-      body: JSON.stringify({ sheetName: SHEET, rowIndex: editing.rowIndex, values: toValues(v) } satisfies UpdateRowRequest),
+      body: JSON.stringify({ sheetName: SHEET, rowIndex: editing.rowIndex, values: [editing.id, ...toValues(v)] } satisfies UpdateRowRequest),
     });
     setSaving(false);
     if (res.success) { setEditing(null); refresh(); }
     else setSaveError(res.error ?? "Error al actualizar");
+  }
+
+  async function handleDelete(c: Character) {
+    if (!window.confirm(`¿Eliminar el personaje "${c.name}"?`)) return;
+    const res = await request<void>(`/sheets/${SHEET}/rows?rowIndex=${c.rowIndex}`, { method: "DELETE" });
+    if (res.success) refresh();
+    else alert(res.error ?? "Error al eliminar");
   }
 
   const title    = userFilter ? `Personajes de ${userLabel ?? userFilter}` : "Personajes";
@@ -201,8 +239,14 @@ export default function Characters({ userFilter, userLabel, onBack }: Props) {
 
                   {/* Header */}
                   <div style={s.cardHeader}>
-                    <p style={s.charName}>{c.name}</p>
+                    <div>
+                      <p style={s.charName}>{c.name}</p>
+                      {c.superName && <p style={s.superName}>{c.superName}</p>}
+                    </div>
                     <div style={{ display: "flex", gap: 5, flexWrap: "wrap", justifyContent: "flex-end" }}>
+                      {c.isPublic === "FALSE" && (
+                        <span className="badge" style={{ background: "transparent", color: "var(--text-muted)", border: "1px solid var(--border)", fontSize: 10 }}>🔒 Privado</span>
+                      )}
                       <span className="badge" style={{ background: "transparent", color: superColor, border: `1px solid ${superColor}` }}>{SUPER_EMOJI[c.super] ? `${SUPER_EMOJI[c.super]} ` : ""}{c.super}</span>
                       <span className="badge" style={{ background: "transparent", color: ARCH_COLORS[c.archetype] ?? "var(--text-muted)", border: `1px solid ${ARCH_COLORS[c.archetype] ?? "var(--border)"}` }}>
                         {c.archetypeData?.emoji ? `${c.archetypeData.emoji} ` : ""}{c.archetype}
@@ -339,9 +383,15 @@ export default function Characters({ userFilter, userLabel, onBack }: Props) {
                                       <img src={pt.symbolUrl} alt={pt.displayName} title={pt.displayName}
                                         style={{ height: 18, objectFit: "contain" }} />
                                     )}
-                                    <span style={{ ...s.catChip, background: catSt.bg, color: catSt.color, border: `1px solid ${catSt.border}` }}>
-                                      {md.category === "PHYSICAL" ? "Físico" : md.category === "SPECIAL" ? "Especial" : "Estado"}
-                                    </span>
+                                    {MOVE_CATEGORY_ICON[md.category] ? (
+                                      <img src={MOVE_CATEGORY_ICON[md.category]} alt={MOVE_CATEGORY_LABELS[md.category] ?? md.category}
+                                        title={MOVE_CATEGORY_LABELS[md.category] ?? md.category}
+                                        style={{ height: 18, objectFit: "contain" }} />
+                                    ) : (
+                                      <span style={{ ...s.catChip, background: catSt.bg, color: catSt.color, border: `1px solid ${catSt.border}` }}>
+                                        {md.category}
+                                      </span>
+                                    )}
                                   </div>
                                 </div>
                                 {(hitLine || dmgLine || effLine) && (
@@ -370,6 +420,13 @@ export default function Characters({ userFilter, userLabel, onBack }: Props) {
                       </div>
                     );
                   })()}
+                  {/* Delete */}
+                  <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "auto", paddingTop: 4 }}>
+                    <button className="ghost" style={{ fontSize: 12, color: "var(--danger)", padding: "4px 10px" }}
+                      onClick={(e) => { e.stopPropagation(); handleDelete(c); }}>
+                      Eliminar
+                    </button>
+                  </div>
                 </div>
               );
             })}
@@ -383,6 +440,10 @@ export default function Characters({ userFilter, userLabel, onBack }: Props) {
             <CharacterForm
               initial={userFilter ? { user: userFilter } : undefined}
               lockUser={!!userFilter}
+              users={userOptions}
+              pokedex={pokedexData ?? []}
+              abilities={abilityOptions}
+              moves={moveOptions}
               isEdit={false} saving={saving} error={saveError}
               onSubmit={handleAdd} onClose={() => setShowAdd(false)}
             />
@@ -396,6 +457,10 @@ export default function Characters({ userFilter, userLabel, onBack }: Props) {
             <CharacterForm
               initial={editing}
               lockUser={!!userFilter}
+              users={userOptions}
+              pokedex={pokedexData ?? []}
+              abilities={abilityOptions}
+              moves={moveOptions}
               isEdit={true} saving={saving} error={saveError}
               onSubmit={handleEdit} onClose={() => setEditing(null)}
             />
@@ -431,6 +496,7 @@ const s: Record<string, React.CSSProperties> = {
     gap: 8,
   },
   charName:    { fontSize: 16, fontWeight: 700, lineHeight: 1.2 },
+  superName:   { fontSize: 12, color: "var(--text-muted)", fontStyle: "italic", marginTop: 2 },
   discord:     { fontSize: 12, color: "var(--text-muted)", marginTop: -6 },
   pokemonRow: {
     display: "flex",

@@ -4,6 +4,8 @@ import {
   EFFECT_VALUE_LABELS, EFFECTS_BY_CATEGORY, SUBJECT_LABELS,
 } from "./ability.js";
 
+const MOVE_CATEGORY_BASE = "https://raw.githubusercontent.com/msikma/pokesprite/c5aaa610ff2acdf7fd8e2dccd181bca8be9fcb3e/misc/seals/home/";
+
 export enum MoveCategory {
   PHYSICAL = "PHYSICAL",
   SPECIAL  = "SPECIAL",
@@ -40,6 +42,12 @@ export const MOVE_CATEGORY_LABELS: Record<string, string> = {
 export const DAMAGE_STAT_LABELS: Record<string, string> = {
   [DamageStat.ATK]:    "ATK",
   [DamageStat.SP_ATK]: "SP.ATK",
+};
+
+export const MOVE_CATEGORY_ICON: Record<string, string> = {
+  [MoveCategory.PHYSICAL]: `${MOVE_CATEGORY_BASE}move-physical.png`,
+  [MoveCategory.SPECIAL]:  `${MOVE_CATEGORY_BASE}move-special.png`,
+  [MoveCategory.STATUS]:   `${MOVE_CATEGORY_BASE}move-status.png`,
 };
 
 export const MOVE_CATEGORY_STYLE: Record<string, { bg: string; color: string; border: string }> = {

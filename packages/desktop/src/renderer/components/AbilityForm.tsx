@@ -17,6 +17,7 @@ const EFFECT_CATEGORY_LABELS: Record<string, string> = {
   [EffectCategory.CONDITION]:    "Condición",
   [EffectCategory.FIELD_STATUS]: "Estado de campo",
   [EffectCategory.CURE]:         "Curación",
+  [EffectCategory.MECHANIC]:     "Mecánica",
 };
 
 interface Props {

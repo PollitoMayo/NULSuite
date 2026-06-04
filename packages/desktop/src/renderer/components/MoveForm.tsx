@@ -11,6 +11,8 @@ const EFFECT_CATEGORY_LABELS_MAP: Record<string, string> = {
   [EffectCategory.BUFF_DEBUFF]:  "Buff / Debuff",
   [EffectCategory.CONDITION]:    "Condición",
   [EffectCategory.FIELD_STATUS]: "Estado de campo",
+  [EffectCategory.CURE]:         "Curación",
+  [EffectCategory.MECHANIC]:     "Mecánica",
 };
 
 interface Props {

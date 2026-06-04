@@ -7,7 +7,8 @@ const SHEET = "USERS";
 
 export interface User {
   rowIndex: number;
-  discord: string;
+  id:       string;
+  discord:  string;
   username: string;
 }
 
@@ -24,9 +25,15 @@ function col(row: SheetData["rows"][number], key: string): string {
 function parseUsers(data: SheetData): User[] {
   return data.rows.map((row, i) => ({
     rowIndex: i,
-    discord: col(row, "discord"),
+    id:       col(row, "id"),
+    discord:  col(row, "discord"),
     username: col(row, "username"),
   }));
+}
+
+function computeNextId(users: User[]): string {
+  const max = users.reduce((m, u) => Math.max(m, parseInt(u.id, 10) || 0), 0);
+  return String(max + 1);
 }
 
 const AVATAR_COLORS = ["#5865f2", "#3ba55c", "#faa61a", "#ed4245", "#eb459e", "#00b0f4"];
@@ -68,9 +75,10 @@ export default function Users({ onUserClick }: Props) {
     e.preventDefault();
     setSaving(true);
     setSaveError(null);
+    const nextId = computeNextId(users);
     const res = await request<void>("/sheets/rows", {
       method: "POST",
-      body: JSON.stringify({ sheetName: SHEET, values: [discord, username] } satisfies AppendRowRequest),
+      body: JSON.stringify({ sheetName: SHEET, values: [nextId, discord, username] } satisfies AppendRowRequest),
     });
     setSaving(false);
     if (res.success) { closeModal(); call(`/sheets/${SHEET}`); }
@@ -87,7 +95,7 @@ export default function Users({ onUserClick }: Props) {
       body: JSON.stringify({
         sheetName: SHEET,
         rowIndex: editing.rowIndex,
-        values: [discord, username],
+        values: [editing.id, discord, username],
       } satisfies UpdateRowRequest),
     });
     setSaving(false);

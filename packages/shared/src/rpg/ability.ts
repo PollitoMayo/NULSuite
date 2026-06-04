@@ -26,6 +26,7 @@ export enum EffectCategory {
   CONDITION    = "CONDITION",
   FIELD_STATUS = "FIELD_STATUS",
   CURE         = "CURE",
+  MECHANIC     = "MECHANIC",
 }
 
 export enum StatusEffect {
@@ -68,6 +69,10 @@ export enum FieldStatus {
   HEAL_BLOCK       = "HEAL_BLOCK",
 }
 
+export enum MechanicEffect {
+  COPY_LAST_MOVE = "COPY_LAST_MOVE",
+}
+
 export enum CureEffect {
   ALL_STATUS       = "CURE_ALL_STATUS",
   CURE_POISON      = "CURE_POISON",
@@ -81,7 +86,7 @@ export enum CureEffect {
   CURE_ALL         = "CURE_ALL",
 }
 
-export type AnyEffect = StatusEffect | BuffDebuff | ConditionEffect | FieldStatus | CureEffect;
+export type AnyEffect = StatusEffect | BuffDebuff | ConditionEffect | FieldStatus | CureEffect | MechanicEffect;
 
 export const STAT_STAGE_MAX =  6;
 export const STAT_STAGE_MIN = -6;
@@ -169,6 +174,7 @@ export const EFFECT_VALUE_LABELS: Record<string, string> = {
   [CureEffect.CURE_CONFUSED]:        "Cura Confusión",
   [CureEffect.CURE_CURSED]:          "Cura Maldición",
   [CureEffect.CURE_ALL]:             "Cura todo",
+  [MechanicEffect.COPY_LAST_MOVE]:   "Copia el último movimiento",
 };
 
 export const EFFECTS_BY_CATEGORY: Record<string, string[]> = {
@@ -177,6 +183,7 @@ export const EFFECTS_BY_CATEGORY: Record<string, string[]> = {
   [EffectCategory.CONDITION]:    Object.values(ConditionEffect),
   [EffectCategory.FIELD_STATUS]: Object.values(FieldStatus),
   [EffectCategory.CURE]:         Object.values(CureEffect),
+  [EffectCategory.MECHANIC]:     Object.values(MechanicEffect),
 };
 
 export const EFFECT_CATEGORY_STYLE: Record<string, { bg: string; color: string; border: string }> = {
@@ -185,6 +192,7 @@ export const EFFECT_CATEGORY_STYLE: Record<string, { bg: string; color: string; 
   [EffectCategory.CONDITION]:    { bg: "#2a1a3a", color: "#c080f0", border: "#6a3a8a" },
   [EffectCategory.FIELD_STATUS]: { bg: "#1a2e20", color: "#70d490", border: "#2a6a40" },
   [EffectCategory.CURE]:         { bg: "#1a2a2e", color: "#60d0e0", border: "#2a6a7a" },
+  [EffectCategory.MECHANIC]:     { bg: "#2a2014", color: "#e0b860", border: "#7a5a20" },
 };
 
 export const TRIGGERS_WITH_SUBJECT = new Set<string>([
