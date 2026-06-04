@@ -1,5 +1,5 @@
 FROM node:22-alpine
-RUN npm install -g pnpm@latest
+RUN npm install -g pnpm@9
 WORKDIR /app
 
 COPY pnpm-workspace.yaml pnpm-lock.yaml package.json tsconfig.base.json ./
