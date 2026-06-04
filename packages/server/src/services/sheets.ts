@@ -31,7 +31,8 @@ export async function getSheetData(sheetName: string): Promise<SheetData> {
       range: sheetName,
     });
     values = res.data.values;
-  } catch {
+  } catch (err) {
+    console.error(`[sheets] getSheetData("${sheetName}") failed:`, err);
     return { sheetName, headers: [], rows: [] };
   }
 

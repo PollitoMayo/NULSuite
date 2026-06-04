@@ -1,14 +1,6 @@
 import { useState, useCallback } from "react";
 import type { ApiResponse } from "@nul/shared";
 
-export function getServerUrl(): string {
-  return localStorage.getItem("nul_server_url") ?? "";
-}
-
-export function setServerUrl(url: string): void {
-  localStorage.setItem("nul_server_url", url.replace(/\/$/, ""));
-}
-
 export function getToken(): string | null {
   return localStorage.getItem("nul_token");
 }
@@ -26,7 +18,8 @@ async function request<T>(
   options: RequestInit = {}
 ): Promise<ApiResponse<T>> {
   const token = getToken();
-  const res = await fetch(`${getServerUrl()}/api${path}`, {
+  const base = (import.meta.env.VITE_SERVER_URL as string ?? "").replace(/\/$/, "");
+  const res = await fetch(`${base}/api${path}`, {
     ...options,
     headers: {
       ...(options.body != null ? { "Content-Type": "application/json" } : {}),
