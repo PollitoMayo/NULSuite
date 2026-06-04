@@ -32,8 +32,8 @@ jobs:
           file: packages/${{ matrix.package }}/Dockerfile
           push: true
           tags: |
-            ghcr.io/${{ github.repository_owner }}/nul-${{ matrix.package }}:latest
-            ghcr.io/${{ github.repository_owner }}/nul-${{ matrix.package }}:${{ github.sha }}
+            ghcr.io/pollitomayo/nul-${{ matrix.package }}:latest
+            ghcr.io/pollitomayo/nul-${{ matrix.package }}:${{ github.sha }}
           cache-from: type=gha,scope=${{ matrix.package }}
           cache-to: type=gha,scope=${{ matrix.package }},mode=max
 
@@ -61,7 +61,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: pnpm
 
       - run: pnpm install --frozen-lockfile
