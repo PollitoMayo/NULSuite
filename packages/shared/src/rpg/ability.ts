@@ -5,7 +5,7 @@ export enum TriggerEvent {
   ON_STATUS    = "ON_STATUS",
   ON_SPECIFIC_STATUS = "ON_SPECIFIC_STATUS",
   START_BATTLE = "START_BATTLE",
-  ON_DEATH     = "ON_DEATH",
+  ON_DEFEATED  = "ON_DEFEATED",
   DMG_ATK      = "DMG_ATK",
   DMG_SPATK    = "DMG_SPATK",
   DMG_ANY      = "DMG_ANY",
@@ -18,6 +18,12 @@ export enum TriggerEvent {
 export enum Subject {
   SELF   = "SELF",
   TARGET = "TARGET",
+  ALLY   = "ALLY",
+  ENEMY  = "ENEMY",
+  ALL    = "ALL",
+  ALLY_ALL = "ALLY_ALL",
+  ENEMY_ALL = "ENEMY_ALL",
+  ANY = "ANY",
 }
 
 export enum EffectCategory {
@@ -47,6 +53,8 @@ export enum BuffDebuff {
   SP_DEF_DOWN = "SP_DEF-1",
   SPD_UP      = "SPD+1",
   SPD_DOWN    = "SPD-1",
+  ACC_UP      = "ACC+1",
+  ACC_DOWN    = "ACC-1",
 }
 
 export enum ConditionEffect {
@@ -120,7 +128,7 @@ export const TRIGGER_EVENT_LABELS: Record<string, string> = {
   [TriggerEvent.ON_STATUS]:    "Al tener un estado",
   [TriggerEvent.ON_SPECIFIC_STATUS]: "Al tener un estado específico",
   [TriggerEvent.START_BATTLE]: "Al iniciar la batalla",
-  [TriggerEvent.ON_DEATH]:     "Al ser derrotado",
+  [TriggerEvent.ON_DEFEATED]:  "Al ser derrotado",
   [TriggerEvent.DMG_ATK]:      "Recibe daño físico (ATK)",
   [TriggerEvent.DMG_SPATK]:    "Recibe daño especial (SP.ATK)",
   [TriggerEvent.DMG_ANY]:      "Recibe cualquier daño",
@@ -133,6 +141,12 @@ export const TRIGGER_EVENT_LABELS: Record<string, string> = {
 export const SUBJECT_LABELS: Record<string, string> = {
   [Subject.SELF]:   "uno mismo",
   [Subject.TARGET]: "objetivo",
+  [Subject.ALLY]:   "aliado",
+  [Subject.ENEMY]:  "enemigo",
+  [Subject.ALL]:    "todos",
+  [Subject.ALLY_ALL]: "todos los aliados",
+  [Subject.ENEMY_ALL]: "todos los enemigos",
+  [Subject.ANY]: "cualquiera (aliado o enemigo)"
 };
 
 export const EFFECT_VALUE_LABELS: Record<string, string> = {
@@ -203,6 +217,7 @@ export const TRIGGERS_WITH_SUBJECT = new Set<string>([
   TriggerEvent.DMG_ANY,
   TriggerEvent.USE_MOVE,
   TriggerEvent.AFTER_ATTACK,
+  TriggerEvent.ON_DEFEATED,
 ]);
 
 // ---- Formatters ----
@@ -214,7 +229,7 @@ const TRIGGER_FORMAT: Record<string, TriggerFn> = {
   [TriggerEvent.ON_STATUS]:    (s)     => `Cuando ${s} tiene un estado`,
   [TriggerEvent.ON_SPECIFIC_STATUS]: (s, p) => `Cuando ${s} tiene ${p}`,
   [TriggerEvent.START_BATTLE]: ()      => "Al iniciar la batalla",
-  [TriggerEvent.ON_DEATH]:     ()      => "Al ser derrotado",
+  [TriggerEvent.ON_DEFEATED]:  ()      => "Al ser derrotado",
   [TriggerEvent.DMG_ATK]:      (s)     => `Cuando ${s} recibe daño físico (ATK)`,
   [TriggerEvent.DMG_SPATK]:    (s)     => `Cuando ${s} recibe daño especial (SP.ATK)`,
   [TriggerEvent.DMG_ANY]:      (s)     => `Cuando ${s} recibe daño`,

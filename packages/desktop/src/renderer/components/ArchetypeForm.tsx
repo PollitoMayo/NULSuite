@@ -11,7 +11,7 @@ interface Props {
 }
 
 const EMPTY: ArchetypeData = {
-  id: "", isPublic: false, name: "", emoji: "❓", hp: "", atk: "", def: "", spAtk: "", spDef: "", spd: "",
+  id: "", isPublic: false, name: "", emoji: "❓", hp: "", atk: "", def: "", spAtk: "", spDef: "", spd: "", acc: "",
 };
 
 export default function ArchetypeForm({ initial, isEdit, saving, error, onSubmit, onClose }: Props) {
@@ -71,6 +71,7 @@ export default function ArchetypeForm({ initial, isEdit, saving, error, onSubmit
             { key: "spAtk", label: "SP.ATK" },
             { key: "spDef", label: "SP.DEF" },
             { key: "spd",   label: "SPD" },
+            { key: "acc",   label: "ACC" },
           ] as { key: keyof ArchetypeData; label: string }[]).map(({ key, label }) => (
             <div key={key}>
               <label>{label}</label>
