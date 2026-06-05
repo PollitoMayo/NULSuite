@@ -21,7 +21,7 @@ mac:
     NSCameraUsageDescription: Application requests access to the device's camera.
 win:
   icon: resources/icon.png
-  executableName: nul-admin
+  executableName: nuladmin
   target:
     - nsis
 linux:
