@@ -1,6 +1,6 @@
 import { parseCondition } from "./condition.js";
 import {
-  EffectCategory, Subject,
+  EffectCategory, Subject, MechanicEffect,
   EFFECT_VALUE_LABELS, EFFECTS_BY_CATEGORY, SUBJECT_LABELS,
 } from "./ability.js";
 
@@ -108,6 +108,7 @@ export function formatMoveEffectCondition(move: MoveData): string {
 export function formatMoveEffect(effect: MoveEffectData): string {
   const what = EFFECT_VALUE_LABELS[effect.value?.toUpperCase()] ?? effect.value ?? "?";
   if (effect.category?.toUpperCase() === EffectCategory.FIELD_STATUS) return `Activa ${what}`;
+  if (effect.value?.toUpperCase() === MechanicEffect.PRIORITY) return `⚡ Ataca primero`;
   const who = SUBJECT_LABELS[effect.subject?.toUpperCase()] ?? effect.subject ?? "?";
   return `${who} - ${what}`;
 }
@@ -146,4 +147,4 @@ export function parseMoveData(
   };
 }
 
-export { EffectCategory, Subject, EFFECT_VALUE_LABELS, EFFECTS_BY_CATEGORY, SUBJECT_LABELS };
+export { EffectCategory, Subject, MechanicEffect, EFFECT_VALUE_LABELS, EFFECTS_BY_CATEGORY, SUBJECT_LABELS };

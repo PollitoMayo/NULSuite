@@ -79,6 +79,7 @@ export enum FieldStatus {
 
 export enum MechanicEffect {
   COPY_LAST_MOVE = "COPY_LAST_MOVE",
+  PRIORITY       = "PRIORITY",
 }
 
 export enum CureEffect {
@@ -189,6 +190,7 @@ export const EFFECT_VALUE_LABELS: Record<string, string> = {
   [CureEffect.CURE_CURSED]:          "Cura Maldición",
   [CureEffect.CURE_ALL]:             "Cura todo",
   [MechanicEffect.COPY_LAST_MOVE]:   "Copia el último movimiento",
+  [MechanicEffect.PRIORITY]:         "Prioridad: ataca primero",
 };
 
 export const EFFECTS_BY_CATEGORY: Record<string, string[]> = {
@@ -251,9 +253,9 @@ export function formatEffect(effect: AbilityEffectData): string {
   const what = EFFECT_VALUE_LABELS[effect.value?.toUpperCase()] ?? effect.value ?? "?";
   const cat = effect.category?.toUpperCase();
   if (cat === EffectCategory.FIELD_STATUS) return `Activa ${what}`;
-  if (cat === EffectCategory.CURE) {
+  if (effect.value?.toUpperCase() === MechanicEffect.PRIORITY) {
     const who = SUBJECT_LABELS[effect.subject?.toUpperCase()] ?? effect.subject ?? "?";
-    return `${who} - ${what}`;
+    return `⚡ ${who} ataca primero`;
   }
   const who = SUBJECT_LABELS[effect.subject?.toUpperCase()] ?? effect.subject ?? "?";
   return `${who} - ${what}`;

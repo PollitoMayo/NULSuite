@@ -4,6 +4,9 @@ All notable changes to the desktop app will be documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
+## [0.1.6] - 2026-06-05
+### Changed
+- Added priority mechanic
 
 ## [0.1.5] - 2026-06-05
 ### Changed
