@@ -1,5 +1,11 @@
 import * as Sentry from "@sentry/node";
 import Fastify from "fastify";
+import { readFileSync } from "fs";
+import { join } from "path";
+
+const { version } = JSON.parse(
+  readFileSync(join(__dirname, "../package.json"), "utf-8")
+) as { version: string };
 
 Sentry.init({
   dsn: process.env.SENTRY_DSN,
@@ -36,7 +42,7 @@ import pokedexRoutes    from "./routes/pokedex.js";
 
   try {
     await app.listen({ port, host });
-    console.log(`[Server] Running at http://${host}:${port}`);
+    console.log(`[Server] v${version} running at http://${host}:${port}`);
   } catch (err) {
     app.log.error(err);
     process.exit(1);

@@ -52,6 +52,13 @@ export default function Users({ onUserClick }: Props) {
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
 
+  async function handleDelete(user: User) {
+    if (!confirm(`¿Eliminar a ${user.username || user.discord}?`)) return;
+    const res = await request<void>(`/sheets/${SHEET}/rows?rowIndex=${user.rowIndex}`, { method: "DELETE" });
+    if (res.success) call(`/sheets/${SHEET}`);
+    else alert(res.error ?? "Error al eliminar");
+  }
+
   const users = data ? parseUsers(data) : [];
 
   useEffect(() => { call(`/sheets/${SHEET}`); }, []);
@@ -152,6 +159,13 @@ export default function Users({ onUserClick }: Props) {
                     onClick={(e) => { e.stopPropagation(); openEdit(user); }}
                   >
                     ✏️
+                  </button>
+                  <button
+                    className="icon-btn"
+                    title="Eliminar usuario"
+                    onClick={(e) => { e.stopPropagation(); handleDelete(user); }}
+                  >
+                    🗑️
                   </button>
                 </div>
               );
