@@ -2,7 +2,7 @@ name: Deploy Desktop
 
 on:
   push:
-    branches: [desktop]
+    branches: [main]
 
 jobs:
   release-mac:

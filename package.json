@@ -5,6 +5,7 @@
     "dev:bot": "pnpm --filter @nul/bot dev",
     "dev:server": "pnpm --filter @nul/server dev",
     "dev:desktop": "pnpm --filter @nul/desktop dev",
+    "preview:desktop": "pnpm --filter @nul/shared build && pnpm --filter @nul/desktop build && pnpm --filter @nul/desktop preview",
     "build": "pnpm --filter @nul/shared build && pnpm --parallel --filter !@nul/shared build",
     "start:bot": "pnpm build && pnpm --filter @nul/bot start",
     "start:server": "pnpm build && pnpm --filter @nul/server start",
