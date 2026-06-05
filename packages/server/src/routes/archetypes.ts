@@ -13,7 +13,7 @@ function colKey(row: Record<string, unknown>, key: string): string {
 }
 
 function archetypeToRow(b: ArchetypeRequest): (string | boolean | null)[] {
-  return [b.id, b.isPublic, b.emoji, b.name, b.hp, b.atk, b.def, b.spAtk, b.spDef, b.spd];
+  return [b.id, b.isPublic, b.emoji, b.name, b.hp, b.atk, b.def, b.spAtk, b.spDef, b.spd, b.acc];
 }
 
 export default async function archetypesRoutes(app: FastifyInstance) {

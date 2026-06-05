@@ -20,7 +20,6 @@ function rv(row: Record<string, unknown>, key: string): string {
 }
 
 export function parseArchetypeData(row: Record<string, unknown>): ArchetypeData {
-  console.log("parseArchetypeData", row);
   return {
     id:       rv(row, "id"),
     isPublic: rv(row, "public").toUpperCase() === "TRUE",

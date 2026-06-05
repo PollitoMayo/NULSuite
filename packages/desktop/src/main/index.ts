@@ -4,6 +4,7 @@ import { join } from "path";
 import { is } from "@electron-toolkit/utils";
 import { autoUpdater } from "electron-updater";
 import * as sentry from "@sentry/electron/main";
+import log from "electron-log/main";
 
 Sentry.init({
   dsn: process.env.SENTRY_DSN,
@@ -46,34 +47,57 @@ function createWindow(icon: string): void {
 }
 
 function setupAutoUpdater() {
+  log.initialize();
+  log.transports.console.level = "debug";
   autoUpdater.autoDownload = false;
-  autoUpdater.logger = console;
+  autoUpdater.logger = log;
+
+  autoUpdater.on("checking-for-update", () => {
+    log.info("=== [AUTOUPDATER] Buscando actualizaciones... ===");
+  });
 
   autoUpdater.on("update-available", (info) => {
+    log.info(`=== [AUTOUPDATER] Nueva versión encontrada: ${info.version} (actual: ${app.getVersion()}) ===`);
     mainWindow?.webContents.send("update-available", info.version);
   });
 
-  autoUpdater.on("update-downloaded", () => {
+  autoUpdater.on("update-not-available", (info) => {
+    log.info(`=== [AUTOUPDATER] Sin actualizaciones. Última versión: ${info.version} ===`);
+  });
+
+  autoUpdater.on("download-progress", (progress) => {
+    log.info(`=== [AUTOUPDATER] Descargando: ${Math.round(progress.percent)}% (${Math.round(progress.bytesPerSecond / 1024)} KB/s) ===`);
+  });
+
+  autoUpdater.on("update-downloaded", (info) => {
+    log.info(`=== [AUTOUPDATER] Descarga completada: ${info.version} — lista para instalar ===`);
     mainWindow?.webContents.send("update-downloaded");
   });
 
   autoUpdater.on("error", (err) => {
-    console.error("[Actualizador] error:", err.message);
+    log.error(`=== [AUTOUPDATER] ERROR: ${err.message} ===`);
+    log.error(err);
     sentry.captureException(err);
     sentry.flush();
   });
 
-  autoUpdater.on("update-not-available", () => {
-    console.log("[Actualizador] Ya está actualizado");
+  ipcMain.handle("get-version",     () => app.getVersion());
+  ipcMain.handle("download-update", () => {
+    log.info("=== [IPCMAIN] Iniciando descarga manual ===");
+    return autoUpdater.downloadUpdate();
+  });
+  ipcMain.handle("install-update",  () => {
+    log.info("=== [IPCMAIN] Instalando y reiniciando ===");
+    return autoUpdater.quitAndInstall();
   });
 
-  ipcMain.handle("get-version",     () => app.getVersion());
-  ipcMain.handle("download-update", () => autoUpdater.downloadUpdate());
-  ipcMain.handle("install-update",  () => autoUpdater.quitAndInstall());
-
-  // Check after window is ready to avoid slowing down startup
   app.once("browser-window-show", () => {
-    if (!is.dev) autoUpdater.checkForUpdates();
+    if (is.dev) {
+      log.info("=== [APP.ONCE] Modo dev — checkForUpdates omitido ===");
+      return;
+    }
+    log.info(`=== [APP.ONCE] App iniciada v${app.getVersion()}, verificando actualizaciones... ===`);
+    autoUpdater.checkForUpdates().catch((err) => log.error("[UPDATER] checkForUpdates falló:", err));
   });
 }
 
