@@ -2,12 +2,15 @@ name: Deploy Desktop
 
 on:
   push:
-    branches: [main]
+    branches: [desktop]
 
 jobs:
-  release-mac:
-    name: Release (macOS)
-    runs-on: macos-latest
+  desktop:
+    name: Desktop release (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [macos-latest, windows-latest]
     permissions:
       contents: write
     steps:
@@ -26,46 +29,14 @@ jobs:
 
       - run: pnpm --filter @nul/shared build
 
-      - name: Build
-        run: pnpm --filter @nul/desktop exec electron-vite build
-
-      - name: Publish
-        run: pnpm --filter @nul/desktop exec electron-builder --publish always
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
-          VITE_SENTRY_DSN: ${{ secrets.VITE_SENTRY_DSN }}
-          VITE_SERVER_URL: ${{ secrets.SERVER_URL }}
-
-  release-windows:
-    name: Release (Windows)
-    runs-on: windows-latest
-    needs: release-mac
-    permissions:
-      contents: write
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 9
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: pnpm
-
-      - run: pnpm install --no-frozen-lockfile
-
-      - run: pnpm --filter @nul/shared build
-
-      - name: Build
+      - name: Set version
         shell: bash
-        run: pnpm --filter @nul/desktop exec electron-vite build
+        run: |
+          VERSION=$(node -p "require('./packages/desktop/package.json').version")
+          cd packages/desktop && npm version "$VERSION" --no-git-tag-version
 
-      - name: Publish
-        shell: bash
-        run: pnpm --filter @nul/desktop exec electron-builder --publish always
+      - name: Package and publish
+        run: pnpm --filter @nul/desktop exec electron-vite build && pnpm --filter @nul/desktop exec electron-builder --publish always
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SENTRY_DSN: ${{ secrets.SENTRY_DSN }}

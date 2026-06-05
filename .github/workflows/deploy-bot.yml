@@ -2,7 +2,7 @@ name: Deploy Bot
 
 on:
   push:
-    branches: [bot, main]
+    branches: [bot]
 
 jobs:
   docker:
