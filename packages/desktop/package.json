@@ -1,7 +1,7 @@
 {
   "name": "@nul/desktop",
   "productName": "NUL Admin",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "NUL Admin desktop app",
   "author": "NUL Dev Team",
   "repository": {
