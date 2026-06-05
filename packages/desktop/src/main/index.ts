@@ -12,6 +12,19 @@ Sentry.init({
 
 let mainWindow: BrowserWindow | null = null;
 
+function checkForUpdates() {
+  if (is.dev) {
+    log.info("=== [UPDATER] Modo dev — checkForUpdates omitido ===");
+    return;
+  }
+
+  log.info(`=== [UPDATER] App iniciada v${app.getVersion()}, verificando actualizaciones... ===`);
+
+  autoUpdater.checkForUpdates().catch((err) => {
+    log.error("=== [UPDATER] checkForUpdates falló ===", err);
+  });
+}
+
 function createWindow(icon: string): void {
   mainWindow = new BrowserWindow({
     title: "NUL Admin",
@@ -31,7 +44,9 @@ function createWindow(icon: string): void {
 
   mainWindow.on("ready-to-show", () => {
     mainWindow?.show();
-    if (is.dev) mainWindow?.webContents.openDevTools();
+  if (is.dev) mainWindow?.webContents.openDevTools();
+
+  checkForUpdates();
   });
 
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
@@ -48,13 +63,24 @@ function createWindow(icon: string): void {
 
 function setupAutoUpdater() {
   log.initialize();
-  log.transports.console.level = "debug";
+log.transports.console.level = "debug";
+log.transports.file.level = "debug";
+
+log.info("=== [LOG] Ruta del archivo:", log.transports.file.getFile().path, "===");
+
+ipcMain.handle("open-logs", () => {
+  const file = log.transports.file.getFile();
+  shell.showItemInFolder(file.path);
+  return file.path;
+});
+
   autoUpdater.autoDownload = false;
   autoUpdater.logger = log;
 
   autoUpdater.on("checking-for-update", () => {
     log.info("=== [AUTOUPDATER] Buscando actualizaciones... ===");
   });
+  
 
   autoUpdater.on("update-available", (info) => {
     log.info(`=== [AUTOUPDATER] Nueva versión encontrada: ${info.version} (actual: ${app.getVersion()}) ===`);

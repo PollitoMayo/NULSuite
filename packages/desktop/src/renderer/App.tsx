@@ -5,6 +5,7 @@ import Characters from "./pages/Characters.js";
 import Abilities from "./pages/Abilities.js";
 import Moves from "./pages/Moves.js";
 import Archetypes from "./pages/Archetypes.js";
+import UpdateBanner from "./components/UpdateBanner.js";
 import { getToken, clearToken } from "./hooks/useApi.js";
 
 type View =
@@ -24,15 +25,11 @@ const NAV = [
 ] as const;
 
 export default function App() {
-  const [authed, setAuthed]           = useState(!!getToken());
-  const [view, setView]               = useState<View>({ page: "users" });
-  const [updateVersion, setUpdateVersion] = useState<string | null>(null);
-  const [updateReady, setUpdateReady]     = useState(false);
-  const [appVersion, setAppVersion]       = useState("");
+  const [authed, setAuthed]     = useState(!!getToken());
+  const [view, setView]         = useState<View>({ page: "users" });
+  const [appVersion, setAppVersion] = useState("");
 
   useEffect(() => {
-    window.api.onUpdateAvailable((v) => setUpdateVersion(v));
-    window.api.onUpdateDownloaded(() => setUpdateReady(true));
     window.api.getVersion().then(setAppVersion);
   }, []);
 
@@ -59,24 +56,7 @@ export default function App() {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100vh" }}>
-      {updateVersion && !updateReady && (
-        <div style={s.updateBanner}>
-          <span>Nueva versión disponible: <strong>v{updateVersion}</strong></span>
-          <button style={s.updateBtn} onClick={() => window.api.downloadUpdate()}>
-            Descargar
-          </button>
-          <button style={s.dismissBtn} onClick={() => setUpdateVersion(null)}>✕</button>
-        </div>
-      )}
-      {updateReady && (
-        <div style={{ ...s.updateBanner, background: "#1a3a1a", borderColor: "var(--success)" }}>
-          <span>Actualización lista para instalar</span>
-          <button style={{ ...s.updateBtn, background: "var(--success)" }}
-            onClick={() => window.api.installUpdate()}>
-            Reiniciar e instalar
-          </button>
-        </div>
-      )}
+      <UpdateBanner />
     <div className="app-shell">
       {/* Sidebar */}
       <nav className="sidebar">
@@ -117,19 +97,3 @@ export default function App() {
   );
 }
 
-const s: Record<string, React.CSSProperties> = {
-  updateBanner: {
-    display: "flex", alignItems: "center", gap: 12,
-    padding: "8px 20px", fontSize: 13,
-    background: "#1a1a3a", borderBottom: "1px solid var(--accent)",
-    flexShrink: 0,
-  },
-  updateBtn: {
-    marginLeft: "auto", fontSize: 12, padding: "4px 14px",
-    background: "var(--accent)",
-  },
-  dismissBtn: {
-    background: "transparent", border: "none", color: "var(--text-muted)",
-    padding: "4px 6px", fontSize: 13,
-  },
-};
