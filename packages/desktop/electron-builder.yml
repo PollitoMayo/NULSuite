@@ -2,6 +2,8 @@ appId: com.nul.desktop
 productName: NUL Admin
 publish:
   provider: github
+  owner: PollitoMayo
+  repo: NULSuite
   releaseType: release
 directories:
   buildResources: resources
