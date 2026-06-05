@@ -1,0 +1,43 @@
+name: Deploy Desktop
+
+on:
+  push:
+    branches: [desktop]
+
+jobs:
+  release:
+    name: Release (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [macos-latest, windows-latest]
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --no-frozen-lockfile
+
+      - run: pnpm --filter @nul/shared build
+
+      - name: Build
+        shell: bash
+        run: pnpm --filter @nul/desktop exec electron-vite build
+
+      - name: Publish
+        shell: bash
+        run: pnpm --filter @nul/desktop exec electron-builder --publish always
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+          VITE_SENTRY_DSN: ${{ secrets.VITE_SENTRY_DSN }}
+          VITE_SERVER_URL: ${{ secrets.SERVER_URL }}
