@@ -55,6 +55,7 @@ function setupAutoUpdater() {
     mainWindow?.webContents.send("update-downloaded");
   });
 
+  ipcMain.handle("get-version",     () => app.getVersion());
   ipcMain.handle("download-update", () => autoUpdater.downloadUpdate());
   ipcMain.handle("install-update",  () => autoUpdater.quitAndInstall());
 

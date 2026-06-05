@@ -28,10 +28,12 @@ export default function App() {
   const [view, setView]               = useState<View>({ page: "users" });
   const [updateVersion, setUpdateVersion] = useState<string | null>(null);
   const [updateReady, setUpdateReady]     = useState(false);
+  const [appVersion, setAppVersion]       = useState("");
 
   useEffect(() => {
     window.api.onUpdateAvailable((v) => setUpdateVersion(v));
     window.api.onUpdateDownloaded(() => setUpdateReady(true));
+    window.api.getVersion().then(setAppVersion);
   }, []);
 
   if (!authed) return <Login onLogin={() => setAuthed(true)} />;
@@ -93,6 +95,11 @@ export default function App() {
           ))}
         </div>
         <div className="sidebar-footer">
+          {appVersion && (
+            <div style={{ fontSize: 11, color: "var(--text-muted)", padding: "0 12px 8px", textAlign: "center" }}>
+              v{appVersion}
+            </div>
+          )}
           <div className="nav-item" style={{ color: "var(--danger)" }}
             onClick={() => { clearToken(); setAuthed(false); }}>
             <span className="nav-icon">🚪</span>
