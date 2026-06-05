@@ -25,10 +25,10 @@ export default function Login({ onLogin }: Props) {
         setToken(res.data.token);
         onLogin();
       } else {
-        setError(res.error ?? "Login failed");
+        setError(res.error ?? "Fallo al iniciar sesión");
       }
     } catch {
-      setError("Could not reach the server. Is it running?");
+      setError("No se pudo conectar al servidor. ¿Está corriendo?");
     } finally {
       setLoading(false);
     }

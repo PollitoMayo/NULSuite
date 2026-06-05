@@ -3,6 +3,7 @@ import { app, BrowserWindow, ipcMain, shell } from "electron";
 import { join } from "path";
 import { is } from "@electron-toolkit/utils";
 import { autoUpdater } from "electron-updater";
+import * as sentry from "@sentry/electron/main";
 
 Sentry.init({
   dsn: process.env.SENTRY_DSN,
@@ -46,6 +47,7 @@ function createWindow(icon: string): void {
 
 function setupAutoUpdater() {
   autoUpdater.autoDownload = false;
+  autoUpdater.logger = console;
 
   autoUpdater.on("update-available", (info) => {
     mainWindow?.webContents.send("update-available", info.version);
@@ -53,6 +55,16 @@ function setupAutoUpdater() {
 
   autoUpdater.on("update-downloaded", () => {
     mainWindow?.webContents.send("update-downloaded");
+  });
+
+  autoUpdater.on("error", (err) => {
+    console.error("[Actualizador] error:", err.message);
+    sentry.captureException(err);
+    sentry.flush();
+  });
+
+  autoUpdater.on("update-not-available", () => {
+    console.log("[Actualizador] Ya está actualizado");
   });
 
   ipcMain.handle("get-version",     () => app.getVersion());
