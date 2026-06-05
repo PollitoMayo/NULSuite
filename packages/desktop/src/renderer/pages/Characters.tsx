@@ -269,6 +269,7 @@ export default function Characters({ userFilter, userLabel, onBack }: Props) {
                       { label: "SP.ATK", value: a.spAtk },
                       { label: "SP.DEF", value: a.spDef },
                       { label: "SPD",    value: a.spd },
+                      { label: "ACC",    value: a.acc },
                     ];
                     return (
                       <div style={s.archetypeStats}>
@@ -600,7 +601,7 @@ const s: Record<string, React.CSSProperties> = {
   effectChip:   { fontSize: 10, fontWeight: 700, padding: "3px 8px", borderRadius: 4 },
   archetypeStats: {
     display: "grid",
-    gridTemplateColumns: "repeat(6, 1fr)",
+    gridTemplateColumns: "repeat(7, 1fr)",
     gap: 4,
     background: "var(--bg)",
     borderRadius: 8,

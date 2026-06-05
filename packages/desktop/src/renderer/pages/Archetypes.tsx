@@ -4,7 +4,7 @@ import ArchetypeForm from "../components/ArchetypeForm.js";
 import type { ArchetypeData, ArchetypeRequest, ApiResponse } from "@nul/shared";
 
 function toRequest(a: ArchetypeData): ArchetypeRequest {
-  return { id: a.id, isPublic: a.isPublic, name: a.name, emoji: a.emoji, hp: a.hp, atk: a.atk, def: a.def, spAtk: a.spAtk, spDef: a.spDef, spd: a.spd };
+  return { id: a.id, isPublic: a.isPublic, name: a.name, emoji: a.emoji, hp: a.hp, atk: a.atk, def: a.def, spAtk: a.spAtk, spDef: a.spDef, spd: a.spd, acc: a.acc };
 }
 
 const STATS: { key: keyof ArchetypeData; label: string }[] = [
@@ -14,6 +14,7 @@ const STATS: { key: keyof ArchetypeData; label: string }[] = [
   { key: "spAtk", label: "SP.ATK" },
   { key: "spDef", label: "SP.DEF" },
   { key: "spd",   label: "SPD" },
+  { key: "acc",   label: "ACC" },
 ];
 
 export default function Archetypes() {
@@ -141,7 +142,7 @@ export default function Archetypes() {
             </div>
             <div className="modal-body">
               <ArchetypeForm
-                initial={{ id: newId, isPublic: false, name: "", emoji: "❓", hp: "", atk: "", def: "", spAtk: "", spDef: "", spd: "" }}
+                initial={{ id: newId, isPublic: false, name: "", emoji: "❓", hp: "", atk: "", def: "", spAtk: "", spDef: "", spd: "", acc: "" }}
                 isEdit={false} saving={saving} error={saveError}
                 onSubmit={handleAdd} onClose={() => setShowAdd(false)} />
             </div>

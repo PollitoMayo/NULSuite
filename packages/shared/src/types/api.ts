@@ -74,6 +74,7 @@ export interface ArchetypeRequest {
   spAtk:    string;
   spDef:    string;
   spd:      string;
+  acc:      string;
 }
 
 export interface BotStatus {

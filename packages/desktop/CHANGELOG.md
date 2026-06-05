@@ -5,6 +5,11 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.1.5] - 2026-06-05
+### Changed
+- Updated STATS to add ACC value
+- Added more enum subjects, effect category and trigger events.
+
 ## [0.1.1] - 2026-06-04
 
 ### Added

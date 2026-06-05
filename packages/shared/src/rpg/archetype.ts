@@ -9,6 +9,7 @@ export interface ArchetypeData {
   spAtk:    string;
   spDef:    string;
   spd:      string;
+  acc:      string;
 }
 
 function rv(row: Record<string, unknown>, key: string): string {
@@ -19,6 +20,7 @@ function rv(row: Record<string, unknown>, key: string): string {
 }
 
 export function parseArchetypeData(row: Record<string, unknown>): ArchetypeData {
+  console.log("parseArchetypeData", row);
   return {
     id:       rv(row, "id"),
     isPublic: rv(row, "public").toUpperCase() === "TRUE",
@@ -30,5 +32,6 @@ export function parseArchetypeData(row: Record<string, unknown>): ArchetypeData 
     spAtk:    rv(row, "sp.atk"),
     spDef:    rv(row, "sp.def"),
     spd:      rv(row, "spd"),
+    acc:      rv(row, "acc"),
   };
 }
