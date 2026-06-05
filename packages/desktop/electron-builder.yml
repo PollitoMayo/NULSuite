@@ -20,7 +20,7 @@ mac:
   extendInfo:
     NSCameraUsageDescription: Application requests access to the device's camera.
 win:
-  icon: resources/icon.png
+  icon: resources/icon.ico
   executableName: nuladmin
   target:
     - nsis
