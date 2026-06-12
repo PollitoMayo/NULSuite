@@ -107,18 +107,40 @@ export enum FieldWeather {
 }
 
 export enum MechanicEffect {
-  COPY_LAST_MOVE = "COPY_LAST_MOVE",             // Copia el último movimiento
-  PRIORITY       = "PRIORITY",                   // Prioridad: ataca primero
-  CHANGE_SPECIFIC_TYPE = "CHANGE_SPECIFIC_TYPE", // Cambia el tipo específico
-  IGNORE_BARRIER       = "IGNORE_BARRIER",       // Ignora barreras
-  IGNORE_BARRIER_SPECIFIC = "IGNORE_SPECIFIC_BARRIER", // Ignora barreras específicas
-  STATUS_IMMUNITY     = "STATUS_IMMUNITY",       // Inmunidad a estados
-  STATUS_IMMUNITY_SPECIFIC = "STATUS_IMMUNITY_SPECIFIC", // Inmunidad a estados específicos
-  TYPE_IMMUNITY      = "TYPE_IMMUNITY",          // Inmunidad a tipos
-  TYPE_IMMUNITY_SPECIFIC = "TYPE_IMMUNITY_SPECIFIC", // Inmunidad a tipos específicos
-  CONDITION_IMMUNITY = "CONDITION_IMMUNITY",     // Inmunidad a condiciones
-  CONDITION_IMMUNITY_SPECIFIC = "CONDITION_IMMUNITY_SPECIFIC", // Inmunidad a condiciones específicas
+  COPY_LAST_MOVE              = "COPY_LAST_MOVE",
+  PRIORITY                    = "PRIORITY",
+  CHANGE_SPECIFIC_TYPE        = "CHANGE_SPECIFIC_TYPE",
+  IGNORE_BARRIER              = "IGNORE_BARRIER",
+  IGNORE_BARRIER_SPECIFIC     = "IGNORE_SPECIFIC_BARRIER",
+  STATUS_IMMUNITY             = "STATUS_IMMUNITY",
+  STATUS_IMMUNITY_SPECIFIC    = "STATUS_IMMUNITY_SPECIFIC",
+  TYPE_IMMUNITY               = "TYPE_IMMUNITY",
+  TYPE_IMMUNITY_SPECIFIC      = "TYPE_IMMUNITY_SPECIFIC",
+  CONDITION_IMMUNITY          = "CONDITION_IMMUNITY",
+  CONDITION_IMMUNITY_SPECIFIC = "CONDITION_IMMUNITY_SPECIFIC",
 }
+
+export enum Barrier {
+  LIGHT_SCREEN    = "LIGHT_SCREEN",
+  REFLECT         = "REFLECT",
+  AURORA_VEIL     = "AURORA_VEIL",
+  G_MAX_RESONANCE = "G_MAX_RESONANCE",
+}
+
+export enum EffectParamType {
+  POKEMON_TYPE = "POKEMON_TYPE",
+  STATUS       = "STATUS",
+  BARRIER      = "BARRIER",
+  CONDITION    = "CONDITION",
+}
+
+export const MECHANIC_PARAM_TYPE: Partial<Record<string, EffectParamType>> = {
+  [MechanicEffect.CHANGE_SPECIFIC_TYPE]:         EffectParamType.POKEMON_TYPE,
+  [MechanicEffect.IGNORE_BARRIER_SPECIFIC]:       EffectParamType.BARRIER,
+  [MechanicEffect.STATUS_IMMUNITY_SPECIFIC]:      EffectParamType.STATUS,
+  [MechanicEffect.TYPE_IMMUNITY_SPECIFIC]:        EffectParamType.POKEMON_TYPE,
+  [MechanicEffect.CONDITION_IMMUNITY_SPECIFIC]:   EffectParamType.CONDITION,
+};
 
 export enum CureEffect {
   ALL_STATUS      = "CURE_ALL_STATUS",
@@ -275,17 +297,21 @@ export const EFFECT_VALUE_LABELS: Record<string, string> = {
   [CureEffect.CURE_INFATUATE]:      "Cura Enamoramiento",
   [CureEffect.CURE_ALL]:             "Cura todo",
   [CureEffect.CURE_HP]:              "Cura vida",
-  [MechanicEffect.COPY_LAST_MOVE]:   "Copia el último movimiento",
-  [MechanicEffect.PRIORITY]:         "Prioridad: ataca primero",
-  [MechanicEffect.CHANGE_SPECIFIC_TYPE]: "Cambia el tipo específico",
-  [MechanicEffect.IGNORE_BARRIER]:   "Ignora barreras",
-  [MechanicEffect.IGNORE_BARRIER_SPECIFIC]: "Ignora barrera específica",
-  [MechanicEffect.STATUS_IMMUNITY]:  "Inmunidad a estados",
-  [MechanicEffect.STATUS_IMMUNITY_SPECIFIC]: "Inmunidad a estado específico",
-  [MechanicEffect.TYPE_IMMUNITY]:    "Inmunidad a tipos",
-  [MechanicEffect.TYPE_IMMUNITY_SPECIFIC]: "Inmunidad a tipo específico",
-  [MechanicEffect.CONDITION_IMMUNITY]: "Inmunidad a condiciones",
+  [MechanicEffect.COPY_LAST_MOVE]:              "Copia el último movimiento",
+  [MechanicEffect.PRIORITY]:                    "Prioridad: ataca primero",
+  [MechanicEffect.CHANGE_SPECIFIC_TYPE]:        "Cambia el tipo específico",
+  [MechanicEffect.IGNORE_BARRIER]:              "Ignora barreras",
+  [MechanicEffect.IGNORE_BARRIER_SPECIFIC]:     "Ignora barrera específica",
+  [MechanicEffect.STATUS_IMMUNITY]:             "Inmunidad a estados",
+  [MechanicEffect.STATUS_IMMUNITY_SPECIFIC]:    "Inmunidad a estado específico",
+  [MechanicEffect.TYPE_IMMUNITY]:               "Inmunidad a tipos",
+  [MechanicEffect.TYPE_IMMUNITY_SPECIFIC]:      "Inmunidad a tipo específico",
+  [MechanicEffect.CONDITION_IMMUNITY]:          "Inmunidad a condiciones",
   [MechanicEffect.CONDITION_IMMUNITY_SPECIFIC]: "Inmunidad a condición específica",
+  [Barrier.LIGHT_SCREEN]:                       "Light Screen (Pantalla de luz)",
+  [Barrier.REFLECT]:                            "Reflect (Reflejo)",
+  [Barrier.AURORA_VEIL]:                        "Aurora Veil (Velo Aurora)",
+  [Barrier.G_MAX_RESONANCE]:                    "G-Max Resonance (Gigamelodía)",
 };
 
 export const EFFECTS_BY_CATEGORY: Record<string, string[]> = {

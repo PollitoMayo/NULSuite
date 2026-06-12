@@ -1,7 +1,7 @@
 import { parseCondition } from "./condition.js";
 import {
   EffectCategory, MechanicEffect,
-  EFFECT_VALUE_LABELS, SUBJECT_LABELS,
+  EFFECT_VALUE_LABELS, SUBJECT_LABELS, MECHANIC_PARAM_TYPE,
 } from "./effects.js";
 import { Stat, STAT_LABELS } from "./stat.js";
 
@@ -21,9 +21,10 @@ export const DAMAGE_STAT_LABELS: Record<string, string> = {
 };
 
 export interface MoveEffectData {
-  subject: string;
+  subject:  string;
   category: string;
-  value: string;
+  value:    string;
+  param?:   string;
 }
 
 export interface MoveData {
@@ -69,9 +70,14 @@ export function formatMoveEffectCondition(move: MoveData): string {
 
 export function formatMoveEffect(effect: MoveEffectData): string {
   const what = EFFECT_VALUE_LABELS[effect.value?.toUpperCase()] ?? effect.value ?? "?";
-  if (effect.category?.toUpperCase() === EffectCategory.FIELD_STATUS) return `Activa ${what}`;
+  const cat  = effect.category?.toUpperCase();
+  if (cat === EffectCategory.FIELD_STATUS || cat === EffectCategory.FIELD_WEATHER) return `Activa ${what}`;
   if (effect.value?.toUpperCase() === MechanicEffect.PRIORITY) return `⚡ Ataca primero`;
   const who = SUBJECT_LABELS[effect.subject?.toUpperCase()] ?? effect.subject ?? "?";
+  if (MECHANIC_PARAM_TYPE[effect.value?.toUpperCase()] && effect.param) {
+    const paramLabel = EFFECT_VALUE_LABELS[effect.param?.toUpperCase()] ?? effect.param;
+    return `${who} - ${what}: ${paramLabel}`;
+  }
   return `${who} - ${what}`;
 }
 
@@ -102,9 +108,10 @@ export function parseMoveData(
     effectDice: rv(row, "effectdice"),
     effectCondition: rv(row, "effectcondition"),
     effects: effectRows.map(er => ({
-      subject: rv(er, "effectsubject"),
+      subject:  rv(er, "effectsubject"),
       category: rv(er, "effectcategory"),
-      value: rv(er, "effectvalue"),
+      value:    rv(er, "effectvalue"),
+      param:    rv(er, "effectparam") || undefined,
     })),
   };
 }

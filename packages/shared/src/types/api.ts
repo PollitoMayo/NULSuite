@@ -23,6 +23,7 @@ export interface AbilityEffectRequest {
   subject:  string;
   category: string;
   value:    string;
+  param?:   string;
 }
 
 export interface AbilityTriggerRequest {
@@ -45,6 +46,7 @@ export interface MoveEffectRequest {
   subject:  string;
   category: string;
   value:    string;
+  param?:   string;
 }
 
 export interface MoveRequest {
