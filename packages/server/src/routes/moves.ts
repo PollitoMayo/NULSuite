@@ -52,7 +52,7 @@ export default async function movesRoutes(app: FastifyInstance) {
     const body = req.body as MoveRequest;
     await appendRow({ sheetName: MOVES, values: moveToRow(body) });
     if (body.effects.length > 0) {
-      await appendRows(MOVE_EFFECTS, body.effects.map((e) => [body.id, e.subject, e.category, e.value]));
+      await appendRows(MOVE_EFFECTS, body.effects.map((e) => [body.id, e.subject, e.category, e.value, e.param ?? ""]));
     }
     return reply.code(201).send({ success: true } satisfies ApiResponse<void>);
   });
@@ -80,7 +80,7 @@ export default async function movesRoutes(app: FastifyInstance) {
     await updateRow({ sheetName: MOVES, rowIndex: moveIdx, values: moveToRow(body) });
     await deleteRows(MOVE_EFFECTS, effectIndices);
     if (body.effects.length > 0) {
-      await appendRows(MOVE_EFFECTS, body.effects.map((e) => [body.id, e.subject, e.category, e.value]));
+      await appendRows(MOVE_EFFECTS, body.effects.map((e) => [body.id, e.subject, e.category, e.value, e.param ?? ""]));
     }
     return reply.send({ success: true } satisfies ApiResponse<void>);
   });

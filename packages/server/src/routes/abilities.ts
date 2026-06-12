@@ -69,7 +69,7 @@ export default async function abilitiesRoutes(app: FastifyInstance) {
       await appendRows(TRIGGERS, body.triggers.map((t) => [body.id, t.event, t.subject, t.param]));
     }
     if (body.effects.length > 0) {
-      await appendRows(EFFECTS, body.effects.map((e) => [body.id, e.subject, e.category, e.value]));
+      await appendRows(EFFECTS, body.effects.map((e) => [body.id, e.subject, e.category, e.value, e.param ?? ""]));
     }
     return reply.code(201).send({ success: true } satisfies ApiResponse<void>);
   });
@@ -107,7 +107,7 @@ export default async function abilitiesRoutes(app: FastifyInstance) {
     }
     await deleteRows(EFFECTS, effectIndices);
     if (body.effects.length > 0) {
-      await appendRows(EFFECTS, body.effects.map((e) => [body.id, e.subject, e.category, e.value]));
+      await appendRows(EFFECTS, body.effects.map((e) => [body.id, e.subject, e.category, e.value, e.param ?? ""]));
     }
     return reply.send({ success: true } satisfies ApiResponse<void>);
   });
