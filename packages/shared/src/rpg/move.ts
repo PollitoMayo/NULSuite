@@ -1,7 +1,7 @@
 import { parseCondition } from "./condition.js";
 import {
-  EffectCategory, MechanicEffect,
-  EFFECT_VALUE_LABELS, SUBJECT_LABELS, MECHANIC_PARAM_TYPE,
+  EffectCategory, MechanicEffect, EffectParamType,
+  EFFECT_VALUE_LABELS, SUBJECT_LABELS, MECHANIC_PARAM_TYPE, formatCureAmount,
 } from "./effects.js";
 import { Stat, STAT_LABELS } from "./stat.js";
 
@@ -74,8 +74,11 @@ export function formatMoveEffect(effect: MoveEffectData): string {
   if (cat === EffectCategory.FIELD_STATUS || cat === EffectCategory.FIELD_WEATHER) return `Activa ${what}`;
   if (effect.value?.toUpperCase() === MechanicEffect.PRIORITY) return `⚡ Ataca primero`;
   const who = SUBJECT_LABELS[effect.subject?.toUpperCase()] ?? effect.subject ?? "?";
-  if (MECHANIC_PARAM_TYPE[effect.value?.toUpperCase()] && effect.param) {
-    const paramLabel = EFFECT_VALUE_LABELS[effect.param?.toUpperCase()] ?? effect.param;
+  const paramType = MECHANIC_PARAM_TYPE[effect.value?.toUpperCase()];
+  if (paramType && effect.param) {
+    const paramLabel = paramType === EffectParamType.CURE_AMOUNT
+      ? formatCureAmount(effect.param)
+      : (EFFECT_VALUE_LABELS[effect.param?.toUpperCase()] ?? effect.param);
     return `${who} - ${what}: ${paramLabel}`;
   }
   return `${who} - ${what}`;

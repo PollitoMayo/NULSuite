@@ -132,15 +132,8 @@ export enum EffectParamType {
   STATUS       = "STATUS",
   BARRIER      = "BARRIER",
   CONDITION    = "CONDITION",
+  CURE_AMOUNT  = "CURE_AMOUNT",
 }
-
-export const MECHANIC_PARAM_TYPE: Partial<Record<string, EffectParamType>> = {
-  [MechanicEffect.CHANGE_SPECIFIC_TYPE]:         EffectParamType.POKEMON_TYPE,
-  [MechanicEffect.IGNORE_BARRIER_SPECIFIC]:       EffectParamType.BARRIER,
-  [MechanicEffect.STATUS_IMMUNITY_SPECIFIC]:      EffectParamType.STATUS,
-  [MechanicEffect.TYPE_IMMUNITY_SPECIFIC]:        EffectParamType.POKEMON_TYPE,
-  [MechanicEffect.CONDITION_IMMUNITY_SPECIFIC]:   EffectParamType.CONDITION,
-};
 
 export enum CureEffect {
   ALL_STATUS      = "CURE_ALL_STATUS",
@@ -154,6 +147,24 @@ export enum CureEffect {
   CURE_INFATUATE  = "CURE_INFATUATE",
   CURE_ALL        = "CURE_ALL",
   CURE_HP         = "CURE_HP",
+}
+
+export const MECHANIC_PARAM_TYPE: Partial<Record<string, EffectParamType>> = {
+  [MechanicEffect.CHANGE_SPECIFIC_TYPE]:         EffectParamType.POKEMON_TYPE,
+  [MechanicEffect.IGNORE_BARRIER_SPECIFIC]:       EffectParamType.BARRIER,
+  [MechanicEffect.STATUS_IMMUNITY_SPECIFIC]:      EffectParamType.STATUS,
+  [MechanicEffect.TYPE_IMMUNITY_SPECIFIC]:        EffectParamType.POKEMON_TYPE,
+  [MechanicEffect.CONDITION_IMMUNITY_SPECIFIC]:   EffectParamType.CONDITION,
+  [CureEffect.CURE_HP]:                           EffectParamType.CURE_AMOUNT,
+};
+
+export function formatCureAmount(param: string): string {
+  if (!param) return "";
+  if (param.startsWith("d")) return `1${param}`;
+  const num = parseFloat(param);
+  if (isNaN(num)) return param;
+  if (num > 0 && num <= 1) return `${Math.round(num * 100)}%`;
+  return `${num}%`;
 }
 
 export type AnyEffect =

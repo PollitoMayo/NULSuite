@@ -1,17 +1,17 @@
 import { parseCondition } from "./condition.js";
 import {
-  Subject, EffectCategory, MechanicEffect, MECHANIC_PARAM_TYPE,
+  Subject, EffectCategory, MechanicEffect, MECHANIC_PARAM_TYPE, EffectParamType,
   SUBJECT_LABELS, EFFECT_VALUE_LABELS,
-  TRIGGER_FORMAT,
+  TRIGGER_FORMAT, formatCureAmount,
 } from "./effects.js";
 
 export {
   Subject, EffectCategory,
   StatusEffect, BuffDebuff, ConditionEffect, FieldStatus, MechanicEffect, CureEffect,
-  AnyEffect,
   STAT_STAGE_MAX, STAT_STAGE_MIN,
   SUBJECT_LABELS, EFFECT_VALUE_LABELS, EFFECTS_BY_CATEGORY, EFFECT_CATEGORY_STYLE,
 } from "./effects.js";
+export type { AnyEffect } from "./effects.js";
 
 export interface AbilityEffectData {
   subject:  string;
@@ -55,8 +55,11 @@ export function formatEffect(effect: AbilityEffectData): string {
     return `⚡ ${who} ataca primero`;
   }
   const who = SUBJECT_LABELS[effect.subject?.toUpperCase()] ?? effect.subject ?? "?";
-  if (MECHANIC_PARAM_TYPE[effect.value?.toUpperCase()] && effect.param) {
-    const paramLabel = EFFECT_VALUE_LABELS[effect.param?.toUpperCase()] ?? effect.param;
+  const paramType = MECHANIC_PARAM_TYPE[effect.value?.toUpperCase()];
+  if (paramType && effect.param) {
+    const paramLabel = paramType === EffectParamType.CURE_AMOUNT
+      ? formatCureAmount(effect.param)
+      : (EFFECT_VALUE_LABELS[effect.param?.toUpperCase()] ?? effect.param);
     return `${who} - ${what}: ${paramLabel}`;
   }
   return `${who} - ${what}`;

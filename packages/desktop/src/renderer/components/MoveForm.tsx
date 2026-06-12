@@ -1,19 +1,120 @@
 import { FormEvent, useState } from "react";
 import {
   EffectCategory, Subject, MoveCategory, DamageStat, Stat,
+  StatusEffect, ConditionEffect, Barrier, EffectParamType,
   EFFECT_VALUE_LABELS, EFFECTS_BY_CATEGORY, SUBJECT_LABELS, MOVE_CATEGORY_LABELS, DAMAGE_STAT_LABELS, STAT_LABELS,
+  MECHANIC_PARAM_TYPE,
   type MoveData, type MoveEffectData,
 } from "@nul/shared";
 import { PokemonType } from "@nul/shared";
 
 const EFFECT_CATEGORY_LABELS_MAP: Record<string, string> = {
-  [EffectCategory.STATUS]:       "Estado",
-  [EffectCategory.BUFF_DEBUFF]:  "Buff / Debuff",
-  [EffectCategory.CONDITION]:    "Condición",
-  [EffectCategory.FIELD_STATUS]: "Estado de campo",
-  [EffectCategory.CURE]:         "Curación",
-  [EffectCategory.MECHANIC]:     "Mecánica",
+  [EffectCategory.STATUS]:        "Estado",
+  [EffectCategory.BUFF_DEBUFF]:   "Buff / Debuff",
+  [EffectCategory.CONDITION]:     "Condición",
+  [EffectCategory.FIELD_STATUS]:  "Estado de campo",
+  [EffectCategory.FIELD_WEATHER]: "Clima",
+  [EffectCategory.CURE]:          "Curación",
+  [EffectCategory.MECHANIC]:      "Mecánica",
 };
+
+type CureAmountType = "dice" | "fraction" | "percent";
+
+function parseCureAmount(v: string): { type: CureAmountType; n: string } {
+  if (!v) return { type: "dice", n: "" };
+  if (v.startsWith("d")) return { type: "dice", n: v.slice(1) };
+  const num = parseFloat(v);
+  return { type: num > 0 && num <= 1 ? "fraction" : "percent", n: v };
+}
+
+function CureAmountSelect({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const initial = parseCureAmount(value);
+  const [type, setType] = useState<CureAmountType>(initial.type);
+  const [n, setN]       = useState(initial.n);
+
+  function emit(t: CureAmountType, num: string) {
+    if (!num) return;
+    onChange(t === "dice" ? `d${num}` : num);
+  }
+
+  return (
+    <div style={{ display: "flex", gap: 8 }}>
+      <select value={type} onChange={(e) => { const t = e.target.value as CureAmountType; setType(t); emit(t, n); }}
+        style={{ flex: "0 0 120px" }}>
+        <option value="dice">Dado</option>
+        <option value="fraction">Fracción</option>
+        <option value="percent">Porcentaje</option>
+      </select>
+      <div style={{ display: "flex", alignItems: "center", flex: 1 }}>
+        {type === "dice" && (
+          <span style={{ background: "var(--border)", color: "var(--text-muted)", padding: "9px 8px", borderRadius: "6px 0 0 6px", border: "1px solid var(--border)", borderRight: "none", fontSize: 13, fontWeight: 600 }}>1d</span>
+        )}
+        <input
+          type="number"
+          min={type === "dice" ? 1 : 0}
+          max={type === "percent" ? 100 : type === "fraction" ? 1 : undefined}
+          step={type === "fraction" ? 0.01 : 1}
+          value={n}
+          onChange={(e) => { setN(e.target.value); emit(type, e.target.value); }}
+          placeholder={type === "dice" ? "6" : type === "fraction" ? "0.5" : "25"}
+          style={type === "dice" ? { borderRadius: "0 6px 6px 0", borderLeft: "none" } : undefined}
+        />
+        {type === "percent" && <span style={{ color: "var(--text-muted)", padding: "0 8px", fontSize: 14 }}>%</span>}
+      </div>
+    </div>
+  );
+}
+
+function ParamSelect({ paramType, value, onChange }: {
+  paramType: EffectParamType;
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  if (paramType === EffectParamType.POKEMON_TYPE) {
+    return (
+      <select value={value} onChange={(e) => onChange(e.target.value)} required>
+        <option value="">— Tipo —</option>
+        {PokemonType.all().map((t) => (
+          <option key={t.codeName} value={t.codeName}>{t.displayName}</option>
+        ))}
+      </select>
+    );
+  }
+  if (paramType === EffectParamType.BARRIER) {
+    return (
+      <select value={value} onChange={(e) => onChange(e.target.value)} required>
+        <option value="">— Barrera —</option>
+        {Object.values(Barrier).map((v) => (
+          <option key={v} value={v}>{EFFECT_VALUE_LABELS[v] ?? v}</option>
+        ))}
+      </select>
+    );
+  }
+  if (paramType === EffectParamType.STATUS) {
+    return (
+      <select value={value} onChange={(e) => onChange(e.target.value)} required>
+        <option value="">— Estado —</option>
+        {Object.values(StatusEffect).map((v) => (
+          <option key={v} value={v}>{EFFECT_VALUE_LABELS[v] ?? v}</option>
+        ))}
+      </select>
+    );
+  }
+  if (paramType === EffectParamType.CONDITION) {
+    return (
+      <select value={value} onChange={(e) => onChange(e.target.value)} required>
+        <option value="">— Condición —</option>
+        {Object.values(ConditionEffect).map((v) => (
+          <option key={v} value={v}>{EFFECT_VALUE_LABELS[v] ?? v}</option>
+        ))}
+      </select>
+    );
+  }
+  if (paramType === EffectParamType.CURE_AMOUNT) {
+    return <CureAmountSelect value={value} onChange={onChange} />;
+  }
+  return null;
+}
 
 interface Props {
   initial?: MoveData;
@@ -54,7 +155,8 @@ export default function MoveForm({ initial, isEdit, saving, error, onSubmit, onC
     setEffects((e) => e.map((row, idx) => {
       if (idx !== i) return row;
       const updated = { ...row, [key]: value };
-      if (key === "category") updated.value = "";
+      if (key === "category") { updated.value = ""; updated.param = undefined; }
+      if (key === "value")    { updated.param = undefined; }
       return updated;
     }));
   }
@@ -197,42 +299,55 @@ export default function MoveForm({ initial, isEdit, saving, error, onSubmit, onC
           </p>
         )}
         {effects.map((ef, i) => {
-          const options = EFFECTS_BY_CATEGORY[ef.category] ?? [];
-          const isField = ef.category === EffectCategory.FIELD_STATUS;
+          const options   = EFFECTS_BY_CATEGORY[ef.category] ?? [];
+          const isField   = ef.category === EffectCategory.FIELD_STATUS || ef.category === EffectCategory.FIELD_WEATHER;
+          const paramType = MECHANIC_PARAM_TYPE[ef.value?.toUpperCase()] as EffectParamType | undefined;
           return (
-            <div key={i} style={{ ...s.row, marginBottom: 8 }}>
-              {!isField && (
-                <div style={{ flex: "0 0 110px" }}>
-                  <label style={s.smLabel}>Sujeto</label>
-                  <select value={ef.subject} onChange={(e) => setEffect(i, "subject", e.target.value)}>
-                    {Object.values(Subject).map((v) => (
-                      <option key={v} value={v}>{SUBJECT_LABELS[v] ?? v}</option>
+            <div key={i} style={{ marginBottom: 8 }}>
+              <div style={s.row}>
+                {!isField && (
+                  <div style={{ flex: "0 0 110px" }}>
+                    <label style={s.smLabel}>Sujeto</label>
+                    <select value={ef.subject} onChange={(e) => setEffect(i, "subject", e.target.value)}>
+                      {Object.values(Subject).map((v) => (
+                        <option key={v} value={v}>{SUBJECT_LABELS[v] ?? v}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+                <div style={{ flex: "0 0 130px" }}>
+                  <label style={s.smLabel}>Categoría</label>
+                  <select value={ef.category} onChange={(e) => setEffect(i, "category", e.target.value)}>
+                    {Object.values(EffectCategory).map((v) => (
+                      <option key={v} value={v}>{EFFECT_CATEGORY_LABELS_MAP[v] ?? v}</option>
                     ))}
                   </select>
                 </div>
+                <div style={{ flex: 1 }}>
+                  <label style={s.smLabel}>Valor</label>
+                  <select value={ef.value} onChange={(e) => setEffect(i, "value", e.target.value)} required>
+                    <option value="">— Seleccionar —</option>
+                    {options.map((v) => (
+                      <option key={v} value={v}>{EFFECT_VALUE_LABELS[v] ?? v}</option>
+                    ))}
+                  </select>
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
+                  <label style={s.smLabel}>&nbsp;</label>
+                  <button type="button" className="ghost" style={{ padding: "6px 10px", color: "var(--danger)" }}
+                    onClick={() => removeEffect(i)}>✕</button>
+                </div>
+              </div>
+              {paramType && (
+                <div style={{ marginTop: 8 }}>
+                  <label style={s.smLabel}>Parámetro específico</label>
+                  <ParamSelect
+                    paramType={paramType}
+                    value={ef.param ?? ""}
+                    onChange={(v) => setEffect(i, "param", v)}
+                  />
+                </div>
               )}
-              <div style={{ flex: "0 0 130px" }}>
-                <label style={s.smLabel}>Categoría</label>
-                <select value={ef.category} onChange={(e) => setEffect(i, "category", e.target.value)}>
-                  {Object.values(EffectCategory).map((v) => (
-                    <option key={v} value={v}>{EFFECT_CATEGORY_LABELS_MAP[v] ?? v}</option>
-                  ))}
-                </select>
-              </div>
-              <div style={{ flex: 1 }}>
-                <label style={s.smLabel}>Valor</label>
-                <select value={ef.value} onChange={(e) => setEffect(i, "value", e.target.value)} required>
-                  <option value="">— Seleccionar —</option>
-                  {options.map((v) => (
-                    <option key={v} value={v}>{EFFECT_VALUE_LABELS[v] ?? v}</option>
-                  ))}
-                </select>
-              </div>
-              <div style={{ display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
-                <label style={s.smLabel}>&nbsp;</label>
-                <button type="button" className="ghost" style={{ padding: "6px 10px", color: "var(--danger)" }}
-                  onClick={() => removeEffect(i)}>✕</button>
-              </div>
             </div>
           );
         })}
